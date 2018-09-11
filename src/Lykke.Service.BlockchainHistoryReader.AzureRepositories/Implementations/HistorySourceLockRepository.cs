@@ -12,7 +12,7 @@ namespace Lykke.Service.BlockchainHistoryReader.AzureRepositories.Implementation
     [UsedImplicitly]
     public class HistorySourceLockRepository : RepositoryBase, IHistorySourceLockRepository
     {
-        private static readonly TimeSpan LockDuration = TimeSpan.FromSeconds(600); 
+        private static readonly TimeSpan LockDuration = TimeSpan.FromSeconds(60); 
         
         private readonly CloudBlobContainer _container;
         private readonly string _key;
@@ -98,6 +98,14 @@ namespace Lykke.Service.BlockchainHistoryReader.AzureRepositories.Implementation
             public Task ReleaseAsync()
             {
                 return _lockBlob.ReleaseLeaseAsync(new AccessCondition
+                {
+                    LeaseId = _leaseId
+                });
+            }
+
+            public Task RenewAsync()
+            {
+                return _lockBlob.RenewLeaseAsync(new AccessCondition
                 {
                     LeaseId = _leaseId
                 });

@@ -12,5 +12,6 @@
   <ItemGroup>
     <PackageReference Include="Lykke.Common" Version="7.0.4" />
     <PackageReference Include="Lykke.Service.BlockchainApi.Client" Version="17.5.0" />
+    <PackageReference Include="protobuf-net" Version="2.4.0" />
   </ItemGroup>
 </Project>

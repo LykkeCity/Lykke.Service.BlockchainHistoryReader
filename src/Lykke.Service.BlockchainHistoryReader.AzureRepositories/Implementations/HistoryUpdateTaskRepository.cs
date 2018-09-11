@@ -108,10 +108,10 @@ namespace Lykke.Service.BlockchainHistoryReader.AzureRepositories.Implementation
         [UsedImplicitly(ImplicitUseTargetFlags.Members)]
         public class CompletionToken
         {
-            [ProtoMember(0)]
+            [ProtoMember(1)]
             public string MessageId { get; set; }
 
-            [ProtoMember(1)]
+            [ProtoMember(2)]
             public string PopReceipt { get; set; }
 
             
