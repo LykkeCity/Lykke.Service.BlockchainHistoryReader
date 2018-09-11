@@ -43,6 +43,8 @@ namespace Lykke.Service.BlockchainHistoryReader.Modules
         private void LoadExternalDependencies(
             ContainerBuilder builder)
         {
+            var currentSettings = _appSettings.CurrentValue;
+            
             // BlockchainSettingsClient
 
             builder
@@ -52,9 +54,14 @@ namespace Lykke.Service.BlockchainHistoryReader.Modules
 
                     return factory.CreateNew
                     (
-                        settings: _appSettings.CurrentValue.BlockchainSettingsServiceClient
+                        settings: currentSettings.BlockchainSettingsServiceClient
                     );
                 });
+            
+            // ChaosKitty
+            
+            builder
+                .RegisterChaosKitty(currentSettings.BlockchainHistoryReaderService.Chaos);
         }
 
         private void LoadRepositories(
