@@ -18,7 +18,7 @@ BlockchainHistoryReaderService:
         types:
             - JsonArray
     MaxDegreeOfParallelism:
-        settings-key: BlockchainHistoryReaderService-EnabledBlockchainTypes
+        settings-key: BlockchainHistoryReaderService-MaxDegreeOfParallelism
 BlockchainSettingsServiceClient:
     ServiceUrl:
         settings-key: BlockchainSettingsServiceUrl
