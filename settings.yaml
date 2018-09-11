@@ -1,0 +1,38 @@
+BlockchainHistoryReaderService:
+    Cqrs:
+        RabbitConnString:
+            settings-key: CqrsRabbitConnString
+            types:
+                - RabbitMq
+    Db:
+        DataConnString:
+            settings-key: BlockchainHistoryReaderService-DataConnString
+            types:
+                - AzureTableStorage
+        LogsConnString:
+            settings-key: LogsConnString
+            types:
+                - AzureTableStorage
+    EnabledBlockchainTypes:
+        settings-key: BlockchainHistoryReaderService-EnabledBlockchainTypes
+        types:
+            - JsonArray
+    MaxDegreeOfParallelism:
+        settings-key: BlockchainHistoryReaderService-EnabledBlockchainTypes
+BlockchainSettingsServiceClient:
+    ServiceUrl:
+        settings-key: BlockchainSettingsServiceUrl
+    ApiKey:
+        settings-key: BlockchainHistoryReaderService-BlockchainSettingsApiKey
+SlackNotifications:
+    AzureQueue:
+        ConnectionString:
+            settings-key: SlackNotificationsConnString
+            types:
+                - AzureTableStorage
+        QueueName:
+            settings-key: SlackQueueName
+MonitoringServiceClient:
+    MonitoringServiceUrl:
+        settings-key: MonitoringServiceUrl
+
