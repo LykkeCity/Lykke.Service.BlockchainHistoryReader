@@ -12,6 +12,10 @@ namespace Lykke.Service.BlockchainHistoryReader.Core.Services
         Task<bool> ExecuteHistoryUpdateTaskAsync(
             HistoryUpdateTask task);
 
+        Task ResetLatestHash(
+            string blockchainType,
+            string address);
+        
         Task<(HistoryUpdateTask Task, string CompletionToken)> TryGetNextHistoryUpdateTaskAsync();
     }
 }
