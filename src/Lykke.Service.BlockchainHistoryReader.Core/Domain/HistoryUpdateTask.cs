@@ -10,8 +10,5 @@ namespace Lykke.Service.BlockchainHistoryReader.Core.Domain
         
         [ProtoMember(2)]
         public string BlockchainType { get; set; }
-        
-        [ProtoMember(3)]
-        public string LatestHash { get; set; }
     }
 }

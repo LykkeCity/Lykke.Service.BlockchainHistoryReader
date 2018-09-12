@@ -62,5 +62,10 @@ namespace Lykke.Service.BlockchainHistoryReader.Core.Domain
         {
             HistoryUpdateScheduledOn = DateTime.UtcNow;
         }
+
+        public void ResetLatestHash()
+        {
+            LatestHash = null;
+        }
     }
 }

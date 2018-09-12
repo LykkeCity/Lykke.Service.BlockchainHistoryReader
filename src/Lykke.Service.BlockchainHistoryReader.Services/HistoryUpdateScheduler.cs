@@ -62,8 +62,7 @@ namespace Lykke.Service.BlockchainHistoryReader.Services
                         var task = new HistoryUpdateTask
                         {
                             Address = historySource.Address,
-                            BlockchainType = historySource.BlockchainType,
-                            LatestHash = historySource.LatestHash
+                            BlockchainType = historySource.BlockchainType
                         };
                         
                         try

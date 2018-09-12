@@ -1,9 +1,7 @@
 ﻿using Autofac;
 using JetBrains.Annotations;
 using Lykke.HttpClientGenerator;
-using Lykke.HttpClientGenerator.Infrastructure;
 using System;
-using Lykke.Service.BlockchainHistoryReader.Client.Implementations;
 
 #pragma warning disable 1591
 
@@ -34,23 +32,9 @@ namespace Lykke.Service.BlockchainHistoryReader.Client
                 throw new ArgumentNullException(nameof(builder));
             }
 
-            if (settings == null)
-            {
-                throw new ArgumentNullException(nameof(settings));
-            }
+            var client = BlockchainHistoryReaderServiceClientFactory.CreateClient(settings, builderConfigure);
 
-            if (string.IsNullOrWhiteSpace(settings.ServiceUrl))
-            {
-                throw new ArgumentException("Value cannot be null or whitespace.", nameof(BlockchainHistoryReaderServiceClientSettings.ServiceUrl));
-            }
-
-            var clientBuilder = HttpClientGenerator.HttpClientGenerator
-                .BuildForUrl(settings.ServiceUrl)
-                .WithAdditionalCallsWrapper(new ExceptionHandlerCallsWrapper());
-
-            clientBuilder = builderConfigure?.Invoke(clientBuilder) ?? clientBuilder.WithoutRetries();
-
-            builder.RegisterInstance(new BlockchainHistoryReaderClient(clientBuilder.Create()))
+            builder.RegisterInstance(client)
                 .As<IBlockchainHistoryReaderClient>()
                 .SingleInstance();
         }

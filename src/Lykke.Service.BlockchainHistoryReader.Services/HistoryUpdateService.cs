@@ -66,36 +66,39 @@ namespace Lykke.Service.BlockchainHistoryReader.Services
             {
                 if (_enabledBlockchainTypes.Contains(task.BlockchainType))
                 {
-                    var transactions = await GetTransactionsAsync(task);
-
-                    foreach (var transaction in transactions)
-                    {
-                        _cqrsEngine.PublishEvent
-                        (
-                            new TransactionCompletedEvent
-                            {
-                                Amount = transaction.Amount,
-                                AssetId = transaction.AssetId,
-                                BlockchainType = task.BlockchainType,
-                                FromAddress = transaction.FromAddress,
-                                Hash = transaction.Hash,
-                                Timestamp = transaction.Timestamp,
-                                ToAddress = transaction.ToAddress,
-                                TransactionType = transaction.TransactionType
-                            },
-                            BoundedContext.Name
-                        );
-                    }
-
                     var historySource = await _historySourceRepository.TryGetAsync
                     (
                         address: task.Address,
                         blockchainType: task.BlockchainType
                     );
-                    
-                    historySource.OnHistoryUpdated(transactions.Last().Hash);
 
-                    await _historySourceRepository.UpdateAsync(historySource);
+                    if (historySource != null)
+                    {
+                        var transactions = await GetTransactionsAsync(task, historySource.LatestHash);
+
+                        foreach (var transaction in transactions)
+                        {
+                            _cqrsEngine.PublishEvent
+                            (
+                                new TransactionCompletedEvent
+                                {
+                                    Amount = transaction.Amount,
+                                    AssetId = transaction.AssetId,
+                                    BlockchainType = task.BlockchainType,
+                                    FromAddress = transaction.FromAddress,
+                                    Hash = transaction.Hash,
+                                    Timestamp = transaction.Timestamp,
+                                    ToAddress = transaction.ToAddress,
+                                    TransactionType = transaction.TransactionType
+                                },
+                                BoundedContext.Name
+                            );
+                        }
+
+                        historySource.OnHistoryUpdated(transactions.Last().Hash);
+
+                        await _historySourceRepository.UpdateAsync(historySource);
+                    }
                 }
                 
                 return true;
@@ -105,6 +108,24 @@ namespace Lykke.Service.BlockchainHistoryReader.Services
                 _log.Error(e, $"Failed to execute history update task [{task.GetIdForLog()}].");
 
                 return false;
+            }
+        }
+
+        public async Task ResetLatestHash(
+            string blockchainType,
+            string address)
+        {
+            var historySource = await _historySourceRepository.TryGetAsync
+            (
+                address: address,
+                blockchainType: blockchainType
+            );
+
+            if (historySource != null)
+            {
+                historySource.ResetLatestHash();
+
+                await _historySourceRepository.UpdateAsync(historySource);
             }
         }
 
@@ -123,10 +144,10 @@ namespace Lykke.Service.BlockchainHistoryReader.Services
         }
         
         private async Task<HistoricalTransaction[]> GetTransactionsAsync(
-            HistoryUpdateTask task)
+            HistoryUpdateTask task,
+            string afterHash)
         {
             var transactions = new List<HistoricalTransaction>();
-            var afterHash = task.LatestHash;
             
             while (true)
             {
@@ -138,7 +159,7 @@ namespace Lykke.Service.BlockchainHistoryReader.Services
                             afterHash: afterHash,
                             take: 100
                         ))
-                    .Where(x => x.Hash != task.LatestHash)
+                    .Where(x => x.Hash != afterHash)
                     .ToList();
                 
                 transactions.AddRange(transactionsSubRange);
@@ -155,7 +176,6 @@ namespace Lykke.Service.BlockchainHistoryReader.Services
             
             
             return transactions
-                .Where(x => x.Hash != task.LatestHash)
                 .ToArray();
         }
 
