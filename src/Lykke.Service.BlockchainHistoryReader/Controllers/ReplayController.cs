@@ -21,7 +21,7 @@ namespace Lykke.Service.BlockchainHistoryReader.Controllers
         
         [HttpPost]
         public async Task<IActionResult> ReplayHistory(
-            HistorySourceRequest request)
+            [FromBody] HistorySourceRequest request)
         {
             await _historyUpdateService.ResetLatestHash
             (

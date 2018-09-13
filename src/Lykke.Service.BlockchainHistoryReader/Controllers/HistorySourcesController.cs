@@ -21,7 +21,7 @@ namespace Lykke.Service.BlockchainHistoryReader.Controllers
 
         [HttpPost]
         public async Task<IActionResult> AddHistorySource(
-            HistorySourceRequest request)
+            [FromBody] HistorySourceRequest request)
         {
             await _historySourceService.AddHistorySourceIfNotExistsAsync
             (
@@ -34,7 +34,7 @@ namespace Lykke.Service.BlockchainHistoryReader.Controllers
 
         [HttpDelete]
         public async Task<IActionResult> DeleteHistorySource(
-            HistorySourceRequest request)
+            [FromBody] HistorySourceRequest request)
         {
             await _historySourceService.DeleteHistorySourceIfExistsAsync
             (
