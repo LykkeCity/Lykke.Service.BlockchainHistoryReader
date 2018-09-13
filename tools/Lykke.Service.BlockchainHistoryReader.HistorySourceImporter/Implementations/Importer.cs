@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Common.Log;
-using Common.PasswordTools;
 using Lykke.Common.Log;
 using Lykke.Service.BlockchainHistoryReader.Client;
 using Lykke.Service.BlockchainHistoryReader.Client.Models;
+
 
 namespace Lykke.Service.BlockchainHistoryReader.HistorySourceImporter.Implementations
 {
