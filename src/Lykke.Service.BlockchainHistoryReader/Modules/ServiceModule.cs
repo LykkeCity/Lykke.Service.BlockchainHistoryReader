@@ -1,5 +1,4 @@
-﻿using System.Linq;
-using Autofac;
+﻿using Autofac;
 using Common;
 using JetBrains.Annotations;
 using Lykke.Common.Chaos;

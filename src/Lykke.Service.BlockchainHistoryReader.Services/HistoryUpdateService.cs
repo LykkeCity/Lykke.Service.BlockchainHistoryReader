@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using Common.Log;
 using JetBrains.Annotations;
@@ -14,7 +13,6 @@ using Lykke.Service.BlockchainHistoryReader.Contract.Events;
 using Lykke.Service.BlockchainHistoryReader.Core.Domain;
 using Lykke.Service.BlockchainHistoryReader.Core.Services;
 using Lykke.Service.BlockchainHistoryReader.Services.Tools;
-using Lykke.SettingsReader;
 
 
 namespace Lykke.Service.BlockchainHistoryReader.Services
@@ -24,7 +22,6 @@ namespace Lykke.Service.BlockchainHistoryReader.Services
     {
         private readonly IBlockchainApiProxyService _blockchainApiProxy;
         private readonly ICqrsEngine _cqrsEngine;
-        private readonly ReaderWriterLockSlim _enabledBlockchainTypesLock;
         private readonly IHistorySourceRepository _historySourceRepository;
         private readonly IHistoryUpdateTaskRepository _historyUpdateTaskRepository;
         private readonly ILog _log;
@@ -39,7 +36,6 @@ namespace Lykke.Service.BlockchainHistoryReader.Services
         {
             _blockchainApiProxy = blockchainApiProxy;
             _cqrsEngine = cqrsEngine;
-            _enabledBlockchainTypesLock = new ReaderWriterLockSlim();
             _historySourceRepository = historySourceRepository;
             _historyUpdateTaskRepository = historyUpdateTaskRepository;
             _log = logFactory.CreateLog(this);
