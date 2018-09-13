@@ -28,11 +28,15 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "0. Solution items", "0. Sol
 		settings.yaml = settings.yaml
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "5. Tests", "5. Tests", "{B68E431E-0904-42A7-8A43-035BD705A91A}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "6. Tests", "5. Tests", "{B68E431E-0904-42A7-8A43-035BD705A91A}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "4. Contract", "4. Contract", "{287435F3-98AE-403E-AF99-1895A1DC95C2}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lykke.Service.BlockchainHistoryReader.Contract", "contract\Lykke.Service.BlockchainHistoryReader.Contract\Lykke.Service.BlockchainHistoryReader.Contract.csproj", "{B72FB0A9-EE56-41B2-A558-357AF3AC01C1}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "5. Tools", "5. Tools", "{AD16F8F5-8A30-4EED-A861-3F74AA33E239}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lykke.Service.BlockchainHistoryReader.HistorySourceImporter", "tools\Lykke.Service.BlockchainHistoryReader.HistorySourceImporter\Lykke.Service.BlockchainHistoryReader.HistorySourceImporter.csproj", "{7D6E2D59-289A-449A-B5BF-BB5FE11A0BF5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -68,6 +72,10 @@ Global
 		{B72FB0A9-EE56-41B2-A558-357AF3AC01C1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B72FB0A9-EE56-41B2-A558-357AF3AC01C1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B72FB0A9-EE56-41B2-A558-357AF3AC01C1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7D6E2D59-289A-449A-B5BF-BB5FE11A0BF5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7D6E2D59-289A-449A-B5BF-BB5FE11A0BF5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7D6E2D59-289A-449A-B5BF-BB5FE11A0BF5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7D6E2D59-289A-449A-B5BF-BB5FE11A0BF5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -79,6 +87,7 @@ Global
 		{3C300C31-97D3-41E8-A627-C53491BDA28B} = {C9A2CFDE-EA32-4946-B679-7CE6EFA816B8}
 		{A61FFDEE-5725-4650-A788-6E55EE5EFD5B} = {B68E431E-0904-42A7-8A43-035BD705A91A}
 		{B72FB0A9-EE56-41B2-A558-357AF3AC01C1} = {287435F3-98AE-403E-AF99-1895A1DC95C2}
+		{7D6E2D59-289A-449A-B5BF-BB5FE11A0BF5} = {AD16F8F5-8A30-4EED-A861-3F74AA33E239}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {EB6C0EF4-AA6A-444D-8603-3669F73A58BC}

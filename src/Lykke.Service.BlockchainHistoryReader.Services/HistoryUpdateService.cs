@@ -46,12 +46,11 @@ namespace Lykke.Service.BlockchainHistoryReader.Services
 
         
         public async Task CompleteHistoryUpdateTaskAsync(
-            HistoryUpdateTask task,
-            string completionToken)
+            HistoryUpdateTask task)
         {
             try
             {
-                await _historyUpdateTaskRepository.CompleteAsync(completionToken);
+                await _historyUpdateTaskRepository.CompleteAsync(task);
             }
             catch (Exception e)
             {
@@ -129,7 +128,7 @@ namespace Lykke.Service.BlockchainHistoryReader.Services
             }
         }
 
-        public async Task<(HistoryUpdateTask Task, string CompletionToken)> TryGetNextHistoryUpdateTaskAsync()
+        public async Task<HistoryUpdateTask> TryGetNextHistoryUpdateTaskAsync()
         {
             try
             {
@@ -139,7 +138,7 @@ namespace Lykke.Service.BlockchainHistoryReader.Services
             {
                 _log.Error(e, "Failed to get next history update task.");
 
-                return (null, null);
+                return null;
             }
         }
         

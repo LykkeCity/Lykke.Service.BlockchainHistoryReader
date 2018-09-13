@@ -75,30 +75,28 @@ namespace Lykke.Service.BlockchainHistoryReader.QueueConsumers
             }
         }
         
-        private async Task<(bool, HistoryUpdateTask, string)> TryGetNextTaskAsync()
+        private async Task<(bool, HistoryUpdateTask)> TryGetNextTaskAsync()
         {
-            var (task, completionToken) = await _historyUpdateService.TryGetNextHistoryUpdateTaskAsync();
+            var task = await _historyUpdateService.TryGetNextHistoryUpdateTaskAsync();
 
-            return (task != null, task, completionToken);
+            return (task != null, task);
         }
 
         private async Task ProcessTaskAsync(
-            HistoryUpdateTask task,
-            string completionToken)
+            HistoryUpdateTask task)
         {
-            if (await _historyUpdateService.ExecuteHistoryUpdateTaskAsync(task))
+            if (task.DequeueCount >= 5 || await _historyUpdateService.ExecuteHistoryUpdateTaskAsync(task))
             {
-                await _historyUpdateService.CompleteHistoryUpdateTaskAsync(task, completionToken);
+                await _historyUpdateService.CompleteHistoryUpdateTaskAsync(task);
             }
         }
 
         private async Task ProcessTaskAndReleaseThrottlerAsync(
-            HistoryUpdateTask task,
-            string completionToken)
+            HistoryUpdateTask task)
         {
             try
             {
-                await ProcessTaskAsync(task, completionToken);
+                await ProcessTaskAsync(task);
             }
             finally
             {
@@ -119,13 +117,13 @@ namespace Lykke.Service.BlockchainHistoryReader.QueueConsumers
                 {
                     scheduledTasks.RemoveAll(x => x.IsCompleted);
 
-                    var (nextTaskRetrieved, nextTask, completionToken) = await TryGetNextTaskAsync();
+                    var (nextTaskRetrieved, nextTask) = await TryGetNextTaskAsync();
 
                     if (nextTaskRetrieved)
                     {
                         scheduledTasks.Add
                         (
-                            ProcessTaskAndReleaseThrottlerAsync(nextTask, completionToken)
+                            ProcessTaskAndReleaseThrottlerAsync(nextTask)
                         );
                     }
                     else

@@ -6,8 +6,7 @@ namespace Lykke.Service.BlockchainHistoryReader.Core.Services
     public interface IHistoryUpdateService
     {
         Task CompleteHistoryUpdateTaskAsync(
-            HistoryUpdateTask task,
-            string completionToken);
+            HistoryUpdateTask task);
 
         Task<bool> ExecuteHistoryUpdateTaskAsync(
             HistoryUpdateTask task);
@@ -16,6 +15,6 @@ namespace Lykke.Service.BlockchainHistoryReader.Core.Services
             string blockchainType,
             string address);
         
-        Task<(HistoryUpdateTask Task, string CompletionToken)> TryGetNextHistoryUpdateTaskAsync();
+        Task<HistoryUpdateTask> TryGetNextHistoryUpdateTaskAsync();
     }
 }

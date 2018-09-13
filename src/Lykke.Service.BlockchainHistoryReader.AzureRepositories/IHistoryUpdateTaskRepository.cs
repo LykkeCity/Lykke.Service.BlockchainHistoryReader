@@ -7,12 +7,12 @@ namespace Lykke.Service.BlockchainHistoryReader.AzureRepositories
     public interface IHistoryUpdateTaskRepository
     {
         Task CompleteAsync(
-            string completionToken);
+            HistoryUpdateTask task);
 
         Task EnqueueAsync(
             HistoryUpdateTask task);
 
-        Task<(HistoryUpdateTask Task, string CompletionToken)> TryGetAsync(
+        Task<HistoryUpdateTask> TryGetAsync(
             TimeSpan visibilityTimeout);
     }
 }
