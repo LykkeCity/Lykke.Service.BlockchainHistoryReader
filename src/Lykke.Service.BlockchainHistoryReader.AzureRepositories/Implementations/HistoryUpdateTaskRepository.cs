@@ -28,7 +28,6 @@ namespace Lykke.Service.BlockchainHistoryReader.AzureRepositories.Implementation
         public static IHistoryUpdateTaskRepository Create(
             IReloadingManager<string> connectionString)
         {
-            Serializer.PrepareSerializer<CompletionToken>();
             Serializer.PrepareSerializer<HistoryUpdateTask>();
             
             var queue = AzureQueueExt.Create
@@ -42,11 +41,16 @@ namespace Lykke.Service.BlockchainHistoryReader.AzureRepositories.Implementation
         }
         
         public async Task CompleteAsync(
-            string completionToken)
+            HistoryUpdateTask task)
         {
-            var (messageId, popReceipt) = DeserializeObject<CompletionToken>(completionToken);
-
-            await _queue.FinishRawMessageAsync(new CloudQueueMessage(messageId, popReceipt));
+            await _queue.FinishRawMessageAsync
+            (
+                new CloudQueueMessage
+                (
+                    messageId: task.Id,
+                    popReceipt: task.PopReceipt
+                )
+            );
         }
 
         public async Task EnqueueAsync(
@@ -58,7 +62,7 @@ namespace Lykke.Service.BlockchainHistoryReader.AzureRepositories.Implementation
             );
         }
 
-        public async Task<(HistoryUpdateTask Task, string CompletionToken)> TryGetAsync(
+        public async Task<HistoryUpdateTask> TryGetAsync(
             TimeSpan visibilityTimeout)
         {
             var queueMessage = await _queue.GetRawMessageAsync((int) visibilityTimeout.TotalSeconds);
@@ -67,17 +71,15 @@ namespace Lykke.Service.BlockchainHistoryReader.AzureRepositories.Implementation
             {
                 var task = DeserializeObject<HistoryUpdateTask>(queueMessage.AsString);
 
-                var token = SerializeObject(new CompletionToken
-                {
-                    MessageId = queueMessage.Id,
-                    PopReceipt = queueMessage.PopReceipt
-                });
+                task.DequeueCount = queueMessage.DequeueCount;
+                task.Id = queueMessage.Id;
+                task.PopReceipt = queueMessage.PopReceipt;
 
-                return (task, token);
+                return task;
             }
             else
             {
-                return (null, null);
+                return null;
             }
         }
 
@@ -100,27 +102,6 @@ namespace Lykke.Service.BlockchainHistoryReader.AzureRepositories.Implementation
             using (var stream = new MemoryStream(str.GetHexStringToBytes()))  
             {  
                 return Serializer.Deserialize<T>(stream);  
-            }
-        }
-
-
-        [ProtoContract]
-        [UsedImplicitly(ImplicitUseTargetFlags.Members)]
-        public class CompletionToken
-        {
-            [ProtoMember(1)]
-            public string MessageId { get; set; }
-
-            [ProtoMember(2)]
-            public string PopReceipt { get; set; }
-
-            
-            public void Deconstruct(
-                out string messageId,
-                out string popReceipt)
-            {
-                messageId = MessageId;
-                popReceipt = PopReceipt;
             }
         }
     }

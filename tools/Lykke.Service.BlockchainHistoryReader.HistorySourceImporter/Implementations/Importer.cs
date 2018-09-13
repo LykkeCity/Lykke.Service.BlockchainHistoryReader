@@ -28,15 +28,22 @@ namespace Lykke.Service.BlockchainHistoryReader.HistorySourceImporter.Implementa
         
         public async Task RunAsync()
         {
-            _log.Info("Import started");
-            
-            var wallets = await GetWalletsAsync();
-            
-            _log.Info($"Importing {wallets.Length} wallets...");
+            try
+            {
+                _log.Info("Import started");
 
-            await ImportAsync(wallets);
+                var wallets = await GetWalletsAsync();
             
-            _log.Info("Import completed");
+                _log.Info($"Importing {wallets.Length} wallets...");
+
+                await ImportAsync(wallets);
+            
+                _log.Info("Import completed");
+            }
+            catch (Exception e)
+            {
+                _log.Error(e, "Wallets import failed.");
+            }
         }
         
         private async Task<WalletEntity[]> GetWalletsAsync()
