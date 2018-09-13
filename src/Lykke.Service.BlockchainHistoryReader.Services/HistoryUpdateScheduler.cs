@@ -79,8 +79,6 @@ namespace Lykke.Service.BlockchainHistoryReader.Services
                         {
                             _log.Warning($"Failed to schedule history update task [{task.GetIdForLog()}].", e);
                         }
-
-                        await @lock.ReleaseAsync();
                     }
                 }
             }

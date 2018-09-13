@@ -75,7 +75,7 @@ namespace Lykke.Service.BlockchainHistoryReader.AzureRepositories.Implementation
                     (
                         nameof(HistorySourceEntity.HistoryUpdatedOn),
                         QueryComparisons.LessThanOrEqual,
-                        historyUpdatedOnLimit.Date
+                        historyUpdatedOnLimit
                     )
                 );
             
@@ -94,7 +94,7 @@ namespace Lykke.Service.BlockchainHistoryReader.AzureRepositories.Implementation
                 (
                     entitiesBatch
                         .Where(x => x.HistoryUpdateScheduledOn <= historyUpdateScheduledOnLimit ||
-                                    x.HistoryUpdateScheduledOn >= x.HistoryUpdatedOn)
+                                    x.HistoryUpdateScheduledOn <= x.HistoryUpdatedOn)
                 );
                 
                 _chaosKitty.Meow($"{nameof(HistorySourceRepository)}-{nameof(GetAsync)}");

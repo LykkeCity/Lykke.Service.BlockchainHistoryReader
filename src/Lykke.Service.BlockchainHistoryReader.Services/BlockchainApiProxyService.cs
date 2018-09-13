@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Lykke.Common.Log;
@@ -36,20 +37,29 @@ namespace Lykke.Service.BlockchainHistoryReader.Services
             int take)
         {
             var blockchainSettings = await _blockchainSettingsClient.GetSettingsByTypeAsync(blockchainType);
-            var blockchainClient = _blockchainApiClients.GetOrAdd
-            (
-                blockchainSettings.ApiUrl, 
-                (apiUrl, logFactory) => new BlockchainApiClient(logFactory, apiUrl),
-                _logFactory
-            );
 
-            return await blockchainClient.GetHistoryOfIncomingTransactionsAsync
-            (
-                address: address,
-                afterHash: afterHash,
-                take: take,
-                assetAccuracyProvider: assetId => blockchainClient.GetAssetAsync(assetId).Result.Accuracy
-            );
+            if (blockchainSettings != null)
+            {
+                var blockchainClient = _blockchainApiClients.GetOrAdd
+                (
+                    blockchainSettings.ApiUrl, 
+                    (apiUrl, logFactory) => new BlockchainApiClient(logFactory, apiUrl),
+                    _logFactory
+                );
+
+                return await blockchainClient.GetHistoryOfIncomingTransactionsAsync
+                (
+                    address: address,
+                    afterHash: afterHash,
+                    take: take,
+                    assetAccuracyProvider: assetId => blockchainClient.GetAssetAsync(assetId).Result.Accuracy
+                );
+            }
+            else
+            {
+                return Enumerable.Empty<HistoricalTransaction>();
+                
+            }
         }
     }
 }
