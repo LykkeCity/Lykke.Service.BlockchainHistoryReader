@@ -128,15 +128,10 @@ namespace Lykke.Service.BlockchainHistoryReader.Modules
             
             // HistoryUpdateService
             
-            var enabledBlockchainTypes = _appSettings.CurrentValue
-                .BlockchainHistoryReaderService
-                .EnabledBlockchainTypes
-                .ToArray();
-            
             builder
                 .RegisterInstance(new HistoryUpdateService.Settings
                 {
-                    EnabledBlockchainTypes = enabledBlockchainTypes
+                    EnabledBlockchainTypes = _appSettings.Nested(x => x.BlockchainHistoryReaderService.EnabledBlockchainTypes)
                 })
                 .AsSelf();
             
