@@ -122,18 +122,18 @@ namespace Lykke.Service.BlockchainHistoryReader.Modules
             // HistoryUpdateScheduler
             
             builder
+                .RegisterInstance(new HistoryUpdateScheduler.Settings
+                {
+                    EnabledBlockchainTypesManager = _appSettings.Nested(x => x.BlockchainHistoryReaderService.EnabledBlockchainTypes)
+                })
+                .AsSelf();
+            
+            builder
                 .RegisterType<HistoryUpdateScheduler>()
                 .As<IHistoryUpdateScheduler>()
                 .SingleInstance();
             
             // HistoryUpdateService
-            
-            builder
-                .RegisterInstance(new HistoryUpdateService.Settings
-                {
-                    EnabledBlockchainTypes = _appSettings.Nested(x => x.BlockchainHistoryReaderService.EnabledBlockchainTypes)
-                })
-                .AsSelf();
             
             builder
                 .RegisterType<HistoryUpdateService>()

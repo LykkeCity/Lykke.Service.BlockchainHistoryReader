@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Common.Log;
 using JetBrains.Annotations;
@@ -8,6 +9,7 @@ using Lykke.Service.BlockchainHistoryReader.AzureRepositories;
 using Lykke.Service.BlockchainHistoryReader.Core.Domain;
 using Lykke.Service.BlockchainHistoryReader.Core.Services;
 using Lykke.Service.BlockchainHistoryReader.Services.Tools;
+using Lykke.SettingsReader;
 
 
 namespace Lykke.Service.BlockchainHistoryReader.Services
@@ -16,20 +18,26 @@ namespace Lykke.Service.BlockchainHistoryReader.Services
     public class HistoryUpdateScheduler : IHistoryUpdateScheduler
     {
         private readonly IChaosKitty _chaosKitty;
+        private readonly IReloadingManager<IEnumerable<string>> _enabledBlockchainTypesManager;
         private readonly IHistorySourceLockRepository _historySourceLockRepository;
         private readonly IHistorySourceRepository _historySourceRepository;
         private readonly IHistoryUpdateTaskRepository _historyUpdateTaskRepository;
         private readonly ILog _log;
 
+
+        private HashSet<string> _enabledBlockchainTypes;
+        private DateTime _enabledBlockchainTypesExpiresOn;
         
         public HistoryUpdateScheduler(
             IChaosKitty chaosKitty,
             IHistorySourceLockRepository historySourceLockRepository,
             IHistorySourceRepository historySourceRepository,
             IHistoryUpdateTaskRepository historyUpdateTaskRepository,
-            ILogFactory logFactory)
+            ILogFactory logFactory,
+            Settings settings)
         {
             _chaosKitty = chaosKitty;
+            _enabledBlockchainTypesManager = settings.EnabledBlockchainTypesManager;
             _historySourceLockRepository = historySourceLockRepository;
             _historySourceRepository = historySourceRepository;
             _historyUpdateTaskRepository = historyUpdateTaskRepository;
@@ -57,8 +65,22 @@ namespace Lykke.Service.BlockchainHistoryReader.Services
                         historyUpdateScheduledOnLimit: now.AddHours(-1)
                     );
 
+                    if (_enabledBlockchainTypesExpiresOn <= now)
+                    {
+                        await _enabledBlockchainTypesManager.Reload();
+                        
+                        _enabledBlockchainTypes = new HashSet<string>(_enabledBlockchainTypesManager.CurrentValue);
+
+                        _enabledBlockchainTypesExpiresOn = now.AddMinutes(5);
+                    }
+                    
                     foreach (var historySource in historySources)
                     {
+                        if (!_enabledBlockchainTypes.Contains(historySource.BlockchainType))
+                        {
+                            continue;
+                        }
+                        
                         var task = new HistoryUpdateTask
                         {
                             Address = historySource.Address,
@@ -93,6 +115,11 @@ namespace Lykke.Service.BlockchainHistoryReader.Services
                     await @lock.ReleaseAsync();
                 }
             }
+        }
+        
+        public class Settings
+        {
+            public IReloadingManager<IEnumerable<string>> EnabledBlockchainTypesManager { get; set; }
         }
     }
 }

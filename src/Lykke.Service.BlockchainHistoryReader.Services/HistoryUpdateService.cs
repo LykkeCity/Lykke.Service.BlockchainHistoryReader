@@ -24,14 +24,10 @@ namespace Lykke.Service.BlockchainHistoryReader.Services
     {
         private readonly IBlockchainApiProxyService _blockchainApiProxy;
         private readonly ICqrsEngine _cqrsEngine;
-        private readonly IReloadingManager<IEnumerable<string>> _enabledBlockchainTypes;
         private readonly ReaderWriterLockSlim _enabledBlockchainTypesLock;
         private readonly IHistorySourceRepository _historySourceRepository;
         private readonly IHistoryUpdateTaskRepository _historyUpdateTaskRepository;
         private readonly ILog _log;
-
-        
-        private DateTime _enabledBlockchainTypesExpiresOn;
         
         
         public HistoryUpdateService(
@@ -39,12 +35,10 @@ namespace Lykke.Service.BlockchainHistoryReader.Services
             ICqrsEngine cqrsEngine,
             IHistorySourceRepository historySourceRepository,
             IHistoryUpdateTaskRepository historyUpdateTaskRepository,
-            ILogFactory logFactory,
-            Settings settings)
+            ILogFactory logFactory)
         {
             _blockchainApiProxy = blockchainApiProxy;
             _cqrsEngine = cqrsEngine;
-            _enabledBlockchainTypes = settings.EnabledBlockchainTypes;
             _enabledBlockchainTypesLock = new ReaderWriterLockSlim();
             _historySourceRepository = historySourceRepository;
             _historyUpdateTaskRepository = historyUpdateTaskRepository;
@@ -70,49 +64,46 @@ namespace Lykke.Service.BlockchainHistoryReader.Services
         {
             try
             {
-                if (CheckBlockchainTypeEnabled(task.BlockchainType))
+                var historySource = await _historySourceRepository.TryGetAsync
+                (
+                    address: task.Address,
+                    blockchainType: task.BlockchainType
+                );
+
+                if (historySource != null)
                 {
-                    var historySource = await _historySourceRepository.TryGetAsync
-                    (
-                        address: task.Address,
-                        blockchainType: task.BlockchainType
-                    );
+                    var transactions = await GetTransactionsAsync(task, historySource.LatestHash);
 
-                    if (historySource != null)
+                    if (transactions.Any())
                     {
-                        var transactions = await GetTransactionsAsync(task, historySource.LatestHash);
-
-                        if (transactions.Any())
+                        foreach (var transaction in transactions)
                         {
-                            foreach (var transaction in transactions)
-                            {
-                                _cqrsEngine.PublishEvent
-                                (
-                                    new TransactionCompletedEvent
-                                    {
-                                        Amount = transaction.Amount,
-                                        AssetId = transaction.AssetId,
-                                        BlockchainType = task.BlockchainType,
-                                        FromAddress = transaction.FromAddress,
-                                        Hash = transaction.Hash,
-                                        Timestamp = transaction.Timestamp,
-                                        ToAddress = transaction.ToAddress,
-                                        TransactionType = transaction.TransactionType
-                                    },
-                                    BoundedContext.Name
-                                );
-                            }
+                            _cqrsEngine.PublishEvent
+                            (
+                                new TransactionCompletedEvent
+                                {
+                                    Amount = transaction.Amount,
+                                    AssetId = transaction.AssetId,
+                                    BlockchainType = task.BlockchainType,
+                                    FromAddress = transaction.FromAddress,
+                                    Hash = transaction.Hash,
+                                    Timestamp = transaction.Timestamp,
+                                    ToAddress = transaction.ToAddress,
+                                    TransactionType = transaction.TransactionType
+                                },
+                                BoundedContext.Name
+                            );
+                        }
 
-                            historySource.OnHistoryUpdated(transactions.Last().Hash);
-                        }
-                        else
-                        {
-                            historySource.OnHistoryUpdated();
-                        }
-                        
-                        
-                        await _historySourceRepository.UpdateAsync(historySource);
+                        historySource.OnHistoryUpdated(transactions.Last().Hash);
                     }
+                    else
+                    {
+                        historySource.OnHistoryUpdated();
+                    }
+                        
+                        
+                    await _historySourceRepository.UpdateAsync(historySource);
                 }
                 
                 return true;
@@ -156,49 +147,6 @@ namespace Lykke.Service.BlockchainHistoryReader.Services
                 return null;
             }
         }
-
-        private bool CheckBlockchainTypeEnabled(
-            string blockchainType)
-        {
-            _enabledBlockchainTypesLock.EnterUpgradeableReadLock();
-
-            try
-            {
-                if (_enabledBlockchainTypesExpiresOn <= DateTime.UtcNow)
-                {
-                    _enabledBlockchainTypesLock.EnterWriteLock();
-
-                    try
-                    {
-                        var oldValue = _enabledBlockchainTypes.CurrentValue.ToArray();
-
-                        _enabledBlockchainTypes.Reload();
-                        _enabledBlockchainTypesExpiresOn = DateTime.UtcNow.AddMinutes(5);
-
-                        var newValue = _enabledBlockchainTypes.CurrentValue.ToArray();
-
-                        if (!newValue.SequenceEqual(oldValue))
-                        {
-                            _log.Info($"Enabled blockchain types list updated [{string.Join(", ", newValue)}].");
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        _log.Error(e, "Failed to refresh enabled blockchain types list.");
-                    }
-                    finally
-                    {
-                        _enabledBlockchainTypesLock.ExitWriteLock();
-                    }
-                }
-                
-                return _enabledBlockchainTypes.CurrentValue.Contains(blockchainType);
-            }
-            finally
-            {
-                _enabledBlockchainTypesLock.ExitUpgradeableReadLock();
-            }
-        }
         
         private async Task<HistoricalTransaction[]> GetTransactionsAsync(
             HistoryUpdateTask task,
@@ -234,11 +182,6 @@ namespace Lykke.Service.BlockchainHistoryReader.Services
             
             return transactions
                 .ToArray();
-        }
-
-        public class Settings
-        {
-            public IReloadingManager<IEnumerable<string>> EnabledBlockchainTypes { get; set; }
         }
     }
 }
