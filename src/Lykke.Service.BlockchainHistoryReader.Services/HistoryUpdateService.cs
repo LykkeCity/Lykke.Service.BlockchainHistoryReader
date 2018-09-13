@@ -75,27 +75,35 @@ namespace Lykke.Service.BlockchainHistoryReader.Services
                     {
                         var transactions = await GetTransactionsAsync(task, historySource.LatestHash);
 
-                        foreach (var transaction in transactions)
+                        if (transactions.Any())
                         {
-                            _cqrsEngine.PublishEvent
-                            (
-                                new TransactionCompletedEvent
-                                {
-                                    Amount = transaction.Amount,
-                                    AssetId = transaction.AssetId,
-                                    BlockchainType = task.BlockchainType,
-                                    FromAddress = transaction.FromAddress,
-                                    Hash = transaction.Hash,
-                                    Timestamp = transaction.Timestamp,
-                                    ToAddress = transaction.ToAddress,
-                                    TransactionType = transaction.TransactionType
-                                },
-                                BoundedContext.Name
-                            );
+                            foreach (var transaction in transactions)
+                            {
+                                _cqrsEngine.PublishEvent
+                                (
+                                    new TransactionCompletedEvent
+                                    {
+                                        Amount = transaction.Amount,
+                                        AssetId = transaction.AssetId,
+                                        BlockchainType = task.BlockchainType,
+                                        FromAddress = transaction.FromAddress,
+                                        Hash = transaction.Hash,
+                                        Timestamp = transaction.Timestamp,
+                                        ToAddress = transaction.ToAddress,
+                                        TransactionType = transaction.TransactionType
+                                    },
+                                    BoundedContext.Name
+                                );
+                            }
+
+                            historySource.OnHistoryUpdated(transactions.Last().Hash);
                         }
-
-                        historySource.OnHistoryUpdated(transactions.Last().Hash);
-
+                        else
+                        {
+                            historySource.OnHistoryUpdated();
+                        }
+                        
+                        
                         await _historySourceRepository.UpdateAsync(historySource);
                     }
                 }
