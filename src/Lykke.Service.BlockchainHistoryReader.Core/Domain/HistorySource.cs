@@ -10,6 +10,8 @@ namespace Lykke.Service.BlockchainHistoryReader.Core.Domain
         {
             Address = address;
             BlockchainType = blockchainType;
+            HistoryUpdatedOn = DateTime.UnixEpoch;
+            HistoryUpdateScheduledOn = DateTime.UnixEpoch;
         }
 
 
