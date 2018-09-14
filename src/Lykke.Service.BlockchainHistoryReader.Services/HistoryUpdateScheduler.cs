@@ -77,49 +77,51 @@ namespace Lykke.Service.BlockchainHistoryReader.Services
                     
                     _log.Info($"Scheduling update of {historySources.Length} histories.");
 
-                    var scheduledUpdatesCounter = 0;
+                    var scheduledUpdatesCounters = new int[3];
                     
                     foreach (var historySource in historySources)
                     {
                         await @lock.RenewIfNecessaryAsync();
-                        
-                        
-                        if (!_enabledBlockchainTypes.Contains(historySource.BlockchainType))
-                        {
-                            continue;
-                        }
-                        
-                        
-                        var task = new HistoryUpdateTask
-                        {
-                            Address = historySource.Address,
-                            BlockchainType = historySource.BlockchainType
-                        };
-                        
-                        try
-                        {
-                            await _historyUpdateTaskRepository.EnqueueAsync(task);
-                        
-                            _chaosKitty.Meow(task.GetIdForLog());
-                        
-                            historySource.OnHistoryUpdateScheduled();
 
-                            await _historySourceRepository.UpdateAsync(historySource);
-
-                            scheduledUpdatesCounter++;
-                        }
-                        catch (Exception e)
+                        if (_enabledBlockchainTypes.Contains(historySource.BlockchainType))
                         {
-                            _log.Warning($"Failed to schedule history update task [{task.GetIdForLog()}].", e);
+                            var task = new HistoryUpdateTask
+                            {
+                                Address = historySource.Address,
+                                BlockchainType = historySource.BlockchainType
+                            };
+
+                            try
+                            {
+                                await _historyUpdateTaskRepository.EnqueueAsync(task);
+
+                                _chaosKitty.Meow(task.GetIdForLog());
+
+                                historySource.OnHistoryUpdateScheduled();
+
+                                await _historySourceRepository.UpdateAsync(historySource);
+
+                                scheduledUpdatesCounters[0]++;
+                            }
+                            catch (Exception e)
+                            {
+                                _log.Warning($"Failed to schedule history update task [{task.GetIdForLog()}].", e);
+
+                                scheduledUpdatesCounters[1]++;
+                            }
+                        }
+                        else
+                        {
+                            scheduledUpdatesCounters[2]++;
                         }
                     }
                     
-                    _log.Info($"Updates for {scheduledUpdatesCounter} histories have been scheduled.");
-
-                    if (historySources.Length != scheduledUpdatesCounter)
-                    {
-                        _log.Warning($"Failed to schedule updates for {historySources.Length - scheduledUpdatesCounter} histories.");
-                    }
+                    _log.Info
+                    (
+                        $"Updates for {scheduledUpdatesCounters[0]} histories have been scheduled.{Environment.NewLine}" +
+                        $"Updates for {scheduledUpdatesCounters[1]} histories failed.{Environment.NewLine}" +
+                        $"Updates for {scheduledUpdatesCounters[2]} histories are not enabled."
+                    );
                 }
             }
             catch (Exception e)
