@@ -26,17 +26,11 @@ namespace Lykke.Service.BlockchainHistoryReader.Services
         
         public Task StartAsync()
         {
-            Task.Run
-            (
-                () =>
-                {
-                    _cqrsEngine.Start();
+            _cqrsEngine.Start();
 
-                    _historyUpdateTaskQueueConsumer.Start();
+            _historyUpdateTaskQueueConsumer.Start();
 
-                    _historyUpdateSchedulerTimer.Start();
-                }
-            );
+            _historyUpdateSchedulerTimer.Start();
 
             return Task.CompletedTask;
         }
