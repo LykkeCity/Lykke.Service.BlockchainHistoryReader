@@ -75,6 +75,10 @@ namespace Lykke.Service.BlockchainHistoryReader.Services
                         _enabledBlockchainTypesExpiresOn = now.AddMinutes(5);
                     }
                     
+                    _log.Info($"Scheduling update of {historySources.Length} histories.");
+
+                    var scheduledUpdatesCounter = 0;
+                    
                     foreach (var historySource in historySources)
                     {
                         await @lock.RenewIfNecessaryAsync();
@@ -101,11 +105,20 @@ namespace Lykke.Service.BlockchainHistoryReader.Services
                             historySource.OnHistoryUpdateScheduled();
 
                             await _historySourceRepository.UpdateAsync(historySource);
+
+                            scheduledUpdatesCounter++;
                         }
                         catch (Exception e)
                         {
                             _log.Warning($"Failed to schedule history update task [{task.GetIdForLog()}].", e);
                         }
+                    }
+                    
+                    _log.Info($"Updates for {scheduledUpdatesCounter} histories have been scheduled.");
+
+                    if (historySources.Length != scheduledUpdatesCounter)
+                    {
+                        _log.Warning($"Failed to schedule updates for {historySources.Length - scheduledUpdatesCounter} histories.");
                     }
                 }
             }

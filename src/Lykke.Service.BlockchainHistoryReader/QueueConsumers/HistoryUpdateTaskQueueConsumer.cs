@@ -4,7 +4,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using Autofac;
 using Common;
+using Common.Log;
 using JetBrains.Annotations;
+using Lykke.Common.Log;
 using Lykke.Service.BlockchainHistoryReader.Core.Domain;
 using Lykke.Service.BlockchainHistoryReader.Core.Services;
 using Nito.AsyncEx;
@@ -17,6 +19,7 @@ namespace Lykke.Service.BlockchainHistoryReader.QueueConsumers
     {
         private readonly int _emptyQueueCheckInterval;
         private readonly IHistoryUpdateService _historyUpdateService;
+        private readonly ILog _log;
         private readonly SemaphoreSlim _throttler;
         
         private CancellationTokenSource _cts;   
@@ -25,10 +28,12 @@ namespace Lykke.Service.BlockchainHistoryReader.QueueConsumers
         
         public HistoryUpdateTaskQueueConsumer(
             IHistoryUpdateService historyUpdateService,
+            ILogFactory logFactory,
             Settings settings)
         {
             _emptyQueueCheckInterval = settings.EmptyQueueCheckInterval;
             _historyUpdateService = historyUpdateService;
+            _log = logFactory.CreateLog(this);
             _throttler = new SemaphoreSlim(settings.MaxDegreeOfParallelism);
         }
         
@@ -38,6 +43,8 @@ namespace Lykke.Service.BlockchainHistoryReader.QueueConsumers
             {
                 _cts = new CancellationTokenSource();
                 _executingTask = RunAsync(_cts.Token);
+                
+                _log.Info("Queue consumer is started.");
             }
         }
 
@@ -118,6 +125,8 @@ namespace Lykke.Service.BlockchainHistoryReader.QueueConsumers
             }
 
             await Task.WhenAll(scheduledTasks);
+            
+            _log.Info("Queue consumer is stopped.");
         }
 
         public class Settings
