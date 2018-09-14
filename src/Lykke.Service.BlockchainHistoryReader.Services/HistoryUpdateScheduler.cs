@@ -112,10 +112,17 @@ namespace Lykke.Service.BlockchainHistoryReader.Services
             
             if (_enabledBlockchainTypesExpiresOn <= now)
             {
+                var oldEnabledBlockchainTypes = _enabledBlockchainTypes;
+                
                 await _enabledBlockchainTypesManager.Reload();
                         
                 _enabledBlockchainTypes = new HashSet<string>(_enabledBlockchainTypesManager.CurrentValue);
 
+                if (!_enabledBlockchainTypes.SetEquals(oldEnabledBlockchainTypes))
+                {
+                    _log.Info($"Enabled blockchain types list has been changed [{string.Join(", ", _enabledBlockchainTypes)}].");
+                }
+                
                 _enabledBlockchainTypesExpiresOn = now.AddMinutes(5);
             }
         }
