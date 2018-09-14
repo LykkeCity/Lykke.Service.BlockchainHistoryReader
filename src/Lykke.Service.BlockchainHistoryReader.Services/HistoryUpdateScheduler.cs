@@ -55,73 +55,13 @@ namespace Lykke.Service.BlockchainHistoryReader.Services
 
                 if (@lock != null)
                 {
-                    var now = DateTime.UtcNow;
-
                     _chaosKitty.Meow($"{nameof(HistoryUpdateScheduler)}-{nameof(ScheduleHistoryUpdatesAsync)}");
 
-                    // TODO: Get history sources in batches and renew lock lease after each
-                    var historySources = await _historySourceRepository.GetAsync
-                    (
-                        historyUpdatedOnLimit: now.AddMinutes(-5),
-                        historyUpdateScheduledOnLimit: now.AddHours(-1)
-                    );
+                    var historySources = await GetHistorySourcesAsync(@lock); 
 
-                    if (_enabledBlockchainTypesExpiresOn <= now)
-                    {
-                        await _enabledBlockchainTypesManager.Reload();
-                        
-                        _enabledBlockchainTypes = new HashSet<string>(_enabledBlockchainTypesManager.CurrentValue);
-
-                        _enabledBlockchainTypesExpiresOn = now.AddMinutes(5);
-                    }
+                    await ReloadEnabledBlockchainTypesAsync();
                     
-                    _log.Info($"Scheduling update of {historySources.Length} histories.");
-
-                    var scheduledUpdatesCounters = new int[3];
-                    
-                    foreach (var historySource in historySources)
-                    {
-                        await @lock.RenewIfNecessaryAsync();
-
-                        if (_enabledBlockchainTypes.Contains(historySource.BlockchainType))
-                        {
-                            var task = new HistoryUpdateTask
-                            {
-                                Address = historySource.Address,
-                                BlockchainType = historySource.BlockchainType
-                            };
-
-                            try
-                            {
-                                await _historyUpdateTaskRepository.EnqueueAsync(task);
-
-                                _chaosKitty.Meow(task.GetIdForLog());
-
-                                historySource.OnHistoryUpdateScheduled();
-
-                                await _historySourceRepository.UpdateAsync(historySource);
-
-                                scheduledUpdatesCounters[0]++;
-                            }
-                            catch (Exception e)
-                            {
-                                _log.Warning($"Failed to schedule history update task [{task.GetIdForLog()}].", e);
-
-                                scheduledUpdatesCounters[1]++;
-                            }
-                        }
-                        else
-                        {
-                            scheduledUpdatesCounters[2]++;
-                        }
-                    }
-                    
-                    _log.Info
-                    (
-                        $"Updates for {scheduledUpdatesCounters[0]} histories have been scheduled.{Environment.NewLine}" +
-                        $"Updates for {scheduledUpdatesCounters[1]} histories failed.{Environment.NewLine}" +
-                        $"Updates for {scheduledUpdatesCounters[2]} histories are not enabled."
-                    );
+                    await ScheduleUpdatesAsync(historySources, @lock);
                 }
             }
             catch (Exception e)
@@ -133,6 +73,83 @@ namespace Lykke.Service.BlockchainHistoryReader.Services
                 if (@lock != null)
                 {
                     await @lock.ReleaseAsync();
+                }
+            }
+        }
+
+        private async Task<IEnumerable<HistorySource>> GetHistorySourcesAsync(
+            IHistorySourceLockToken @lock)
+        {
+            var now = DateTime.UtcNow;
+            var result = new List<HistorySource>();
+            
+            string continuationToken = null;
+
+            do
+            {
+                await @lock.RenewIfNecessaryAsync();
+                
+                IEnumerable<HistorySource> historySources;
+                
+                (historySources, continuationToken) = await _historySourceRepository.GetAsync
+                (
+                    historyUpdatedOnLimit: now.AddMinutes(-5),
+                    historyUpdateScheduledOnLimit: now.AddHours(-1),
+                    continuationToken: continuationToken
+                );
+                
+                result.AddRange(historySources);
+
+            } while (continuationToken != null);
+
+            return result;
+        }
+        
+
+        private async Task ReloadEnabledBlockchainTypesAsync()
+        {
+            var now = DateTime.UtcNow;
+            
+            if (_enabledBlockchainTypesExpiresOn <= now)
+            {
+                await _enabledBlockchainTypesManager.Reload();
+                        
+                _enabledBlockchainTypes = new HashSet<string>(_enabledBlockchainTypesManager.CurrentValue);
+
+                _enabledBlockchainTypesExpiresOn = now.AddMinutes(5);
+            }
+        }
+        
+        private async Task ScheduleUpdatesAsync(
+            IEnumerable<HistorySource> historySources,
+            IHistorySourceLockToken @lock)
+        {
+            foreach (var historySource in historySources)
+            {
+                await @lock.RenewIfNecessaryAsync();
+
+                if (_enabledBlockchainTypes.Contains(historySource.BlockchainType))
+                {
+                    var task = new HistoryUpdateTask
+                    {
+                        Address = historySource.Address,
+                        BlockchainType = historySource.BlockchainType
+                    };
+
+                    try
+                    {
+                        await _historyUpdateTaskRepository.EnqueueAsync(task);
+
+                        _chaosKitty.Meow(task.GetIdForLog());
+
+                        historySource.OnHistoryUpdateScheduled();
+
+                        await _historySourceRepository.UpdateAsync(historySource);
+                    }
+                    catch (Exception e)
+                    {
+                        _log.Warning($"Failed to schedule history update task [{task.GetIdForLog()}].", e);
+                    }
                 }
             }
         }

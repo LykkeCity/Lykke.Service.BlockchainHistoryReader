@@ -142,7 +142,12 @@ namespace Lykke.Service.BlockchainHistoryReader.Services
             }
             catch (Exception e)
             {
-                _log.Error(e, $"Failed to reset latest hash ");
+                _log.Error
+                (
+                    e, 
+                    $"Failed to reset latest hash for specified history source " +
+                    $"[{nameof(HistorySource.BlockchainType)}: {blockchainType}, {nameof(HistorySource.Address)}: {address}]"
+                );
             }
         }
 
