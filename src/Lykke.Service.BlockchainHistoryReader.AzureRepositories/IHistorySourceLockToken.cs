@@ -6,6 +6,6 @@ namespace Lykke.Service.BlockchainHistoryReader.AzureRepositories
     {
         Task ReleaseAsync();
 
-        Task RenewAsync();
+        Task RenewIfNecessaryAsync();
     }
 }

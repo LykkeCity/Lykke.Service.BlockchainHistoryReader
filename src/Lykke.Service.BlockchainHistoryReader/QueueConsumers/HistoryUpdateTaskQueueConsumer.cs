@@ -7,12 +7,13 @@ using Common;
 using JetBrains.Annotations;
 using Lykke.Service.BlockchainHistoryReader.Core.Domain;
 using Lykke.Service.BlockchainHistoryReader.Core.Services;
+using Nito.AsyncEx;
 
 
 namespace Lykke.Service.BlockchainHistoryReader.QueueConsumers
 {
     [UsedImplicitly]
-    public class HistoryUpdateTaskQueueConsumer : IStartable, IStopable
+    public class HistoryUpdateTaskQueueConsumer
     {
         private readonly int _emptyQueueCheckInterval;
         private readonly IHistoryUpdateService _historyUpdateService;
@@ -30,27 +31,6 @@ namespace Lykke.Service.BlockchainHistoryReader.QueueConsumers
             _historyUpdateService = historyUpdateService;
             _throttler = new SemaphoreSlim(settings.MaxDegreeOfParallelism);
         }
-
-        public void Dispose()
-        {
-            Dispose(true);
-            
-            GC.SuppressFinalize(this);
-        }
-        
-        private void Dispose(
-            bool disposing)
-        {
-            if (disposing)
-            {
-                Stop();
-                
-                _throttler.Dispose();
-                
-                _cts?.Dispose();
-                _executingTask?.Dispose();
-            }
-        }
         
         public void Start()
         {
@@ -61,15 +41,13 @@ namespace Lykke.Service.BlockchainHistoryReader.QueueConsumers
             }
         }
 
-        public void Stop()
+        public async Task StopAsync()
         {
             if (_executingTask != null)
             {
                 _cts.Cancel(false);
             
-                _executingTask.Wait();
-
-                _executingTask.Dispose();
+                await _executingTask.WaitAsync(CancellationToken.None);
 
                 _executingTask = null;
             }

@@ -59,6 +59,7 @@ namespace Lykke.Service.BlockchainHistoryReader.Services
 
                     _chaosKitty.Meow($"{nameof(HistoryUpdateScheduler)}-{nameof(ScheduleHistoryUpdatesAsync)}");
 
+                    // TODO: Get history sources in batches and renew lock lease after each
                     var historySources = await _historySourceRepository.GetAsync
                     (
                         historyUpdatedOnLimit: now.AddMinutes(-5),
@@ -76,10 +77,14 @@ namespace Lykke.Service.BlockchainHistoryReader.Services
                     
                     foreach (var historySource in historySources)
                     {
+                        await @lock.RenewIfNecessaryAsync();
+                        
+                        
                         if (!_enabledBlockchainTypes.Contains(historySource.BlockchainType))
                         {
                             continue;
                         }
+                        
                         
                         var task = new HistoryUpdateTask
                         {

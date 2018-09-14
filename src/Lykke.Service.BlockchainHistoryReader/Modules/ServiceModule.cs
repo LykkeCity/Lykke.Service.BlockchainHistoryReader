@@ -3,6 +3,7 @@ using Common;
 using JetBrains.Annotations;
 using Lykke.Common.Chaos;
 using Lykke.Common.Log;
+using Lykke.Sdk;
 using Lykke.Service.BlockchainHistoryReader.AzureRepositories;
 using Lykke.Service.BlockchainHistoryReader.AzureRepositories.Implementations;
 using Lykke.Service.BlockchainHistoryReader.Core.Services;
@@ -73,7 +74,8 @@ namespace Lykke.Service.BlockchainHistoryReader.Modules
             builder
                 .Register(x => HistorySourceLockRepository.Create
                 (
-                    connectionString: connectionString
+                    connectionString: connectionString,
+                    logFactory: x.Resolve<ILogFactory>()
                 ))
                 .As<IHistorySourceLockRepository>()
                 .SingleInstance();
@@ -138,6 +140,20 @@ namespace Lykke.Service.BlockchainHistoryReader.Modules
                 .RegisterType<HistoryUpdateService>()
                 .As<IHistoryUpdateService>()
                 .SingleInstance();
+            
+            // ShutdownManager
+
+            builder
+                .RegisterType<ShutdownManager>()
+                .As<IShutdownManager>()
+                .SingleInstance();
+            
+            // StartupManager
+
+            builder
+                .RegisterType<StartupManager>()
+                .As<IStartupManager>()
+                .SingleInstance();
         }
 
         private void LoadWorkers(
@@ -147,8 +163,7 @@ namespace Lykke.Service.BlockchainHistoryReader.Modules
             
             builder
                 .RegisterType<HistoryUpdateSchedulerTimer>()
-                .As<IStartable>()
-                .As<IStopable>()
+                .AsSelf()
                 .SingleInstance();
             
             // HistoryUpdateTaskQueueConsumer
@@ -162,8 +177,7 @@ namespace Lykke.Service.BlockchainHistoryReader.Modules
             
             builder
                 .RegisterType<HistoryUpdateTaskQueueConsumer>()
-                .As<IStartable>()
-                .As<IStopable>()
+                .AsSelf()
                 .SingleInstance();
         }
     }

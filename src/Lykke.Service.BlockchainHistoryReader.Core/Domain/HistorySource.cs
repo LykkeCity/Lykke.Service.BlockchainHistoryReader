@@ -61,7 +61,7 @@ namespace Lykke.Service.BlockchainHistoryReader.Core.Domain
         public void OnHistoryUpdated(
             string latestHash)
         {
-            HistoryUpdatedOn = DateTime.UtcNow;
+            LatestHash = latestHash;
 
             OnHistoryUpdated();
         }

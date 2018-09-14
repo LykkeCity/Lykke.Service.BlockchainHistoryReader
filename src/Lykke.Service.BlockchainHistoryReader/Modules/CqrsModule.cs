@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Autofac;
+using Common;
 using JetBrains.Annotations;
 using Lykke.Common.Log;
 using Lykke.Cqrs;
@@ -42,7 +43,7 @@ namespace Lykke.Service.BlockchainHistoryReader.Modules
                 .AutoActivate();
             
             builder
-                .Register(context => new AutofacDependencyResolver(context))
+                .Register(context => new FixedAutofacDependencyResolver(context))
                 .As<IDependencyResolver>()
                 .SingleInstance();
 
@@ -132,7 +133,7 @@ namespace Lykke.Service.BlockchainHistoryReader.Modules
             return new CqrsEngine
             (
                 logFactory: logFactory,
-                dependencyResolver: context.Resolve<IDependencyResolver>(),
+                dependencyResolver: new AutofacDependencyResolver(context.Resolve<IComponentContext>()),
                 messagingEngine: messagingEngine,
                 endpointProvider: new DefaultEndpointProvider(),
                 createMissingEndpoints: true,

@@ -1,6 +1,8 @@
 using System;
 using System.Threading.Tasks;
+using Common.Log;
 using JetBrains.Annotations;
+using Lykke.Common.Log;
 using Lykke.SettingsReader;
 using Microsoft.AspNetCore.Http;
 using Microsoft.WindowsAzure.Storage;
@@ -15,6 +17,7 @@ namespace Lykke.Service.BlockchainHistoryReader.AzureRepositories.Implementation
         private static readonly TimeSpan LockDuration = TimeSpan.FromSeconds(60); 
         
         private readonly CloudBlobContainer _container;
+        private readonly ILog _log;
         private readonly string _key;
 
 
@@ -22,6 +25,7 @@ namespace Lykke.Service.BlockchainHistoryReader.AzureRepositories.Implementation
 
 
         private HistorySourceLockRepository(
+            ILogFactory logFactory,
             string connectionString,
             string container,
             string key)
@@ -30,12 +34,14 @@ namespace Lykke.Service.BlockchainHistoryReader.AzureRepositories.Implementation
             var blobClient = storageAccount.CreateCloudBlobClient();
             
             _container = blobClient.GetContainerReference(container);
+            _log = logFactory.CreateLog(this);
             _key = key;
         }
         
         
         public static IHistorySourceLockRepository Create(
-            IReloadingManager<string> connectionString)
+            IReloadingManager<string> connectionString,
+            ILogFactory logFactory)
         {
             return new HistorySourceLockReloadingDecorator
             (
@@ -43,9 +49,10 @@ namespace Lykke.Service.BlockchainHistoryReader.AzureRepositories.Implementation
                 {
                     var lockRepository = new HistorySourceLockRepository
                     (
-                        reloadSettings ? await connectionString.Reload() : connectionString.CurrentValue,
-                        "transaction-history-sources",
-                        ".lock"
+                        logFactory: logFactory,
+                        connectionString: reloadSettings ? await connectionString.Reload() : connectionString.CurrentValue,
+                        container: "transaction-history-sources",
+                        key: ".lock"
                     );
 
                     await lockRepository.InitializeAsync();
@@ -72,7 +79,9 @@ namespace Lykke.Service.BlockchainHistoryReader.AzureRepositories.Implementation
             {
                 var leaseId = await _lockBlob.AcquireLeaseAsync(LockDuration);
 
-                return new LockToken(_lockBlob, leaseId);
+                _log.Debug("History sources have been locked.");
+                
+                return new LockToken(_lockBlob, _log, leaseId);
             }
             catch (StorageException e) when (e.RequestInformation.HttpStatusCode == StatusCodes.Status409Conflict)
             {
@@ -83,32 +92,67 @@ namespace Lykke.Service.BlockchainHistoryReader.AzureRepositories.Implementation
         private class LockToken : IHistorySourceLockToken
         {
             private readonly string _leaseId;
+            private readonly ILog _log;
             private readonly CloudBlockBlob _lockBlob;
-            
+
+            private DateTime _renewAfter;
+
             
             public LockToken(
                 CloudBlockBlob lockBlob,
+                ILog log,
                 string leaseId)
             {
                 _leaseId = leaseId;
+                _log = log;
                 _lockBlob = lockBlob;
+                
+                UpdateRenewAfter();
             }
             
             
-            public Task ReleaseAsync()
+            public async Task ReleaseAsync()
             {
-                return _lockBlob.ReleaseLeaseAsync(new AccessCondition
+                try
                 {
-                    LeaseId = _leaseId
-                });
+                    await  _lockBlob.ReleaseLeaseAsync(new AccessCondition
+                    {
+                        LeaseId = _leaseId
+                    });
+                    
+                    _log.Debug("History sources lock has been released.");
+                }
+                catch (Exception e)
+                {
+                    _log.Warning("Failed to release history sources lock.", e);
+                }
             }
 
-            public Task RenewAsync()
+            public async Task RenewIfNecessaryAsync()
             {
-                return _lockBlob.RenewLeaseAsync(new AccessCondition
+                try
                 {
-                    LeaseId = _leaseId
-                });
+                    if (DateTime.UtcNow > _renewAfter)
+                    {
+                        await _lockBlob.RenewLeaseAsync(new AccessCondition
+                        {
+                            LeaseId = _leaseId
+                        });
+                    
+                        UpdateRenewAfter();
+                        
+                        _log.Debug("History source lock has been renewed.");
+                    }
+                }
+                catch (Exception e)
+                {
+                    _log.Warning("Failed to renew history source lock.", e);
+                }
+            }
+
+            private void UpdateRenewAfter()
+            {
+                _renewAfter = DateTime.UtcNow + (LockDuration / 2);
             }
         }
     }
