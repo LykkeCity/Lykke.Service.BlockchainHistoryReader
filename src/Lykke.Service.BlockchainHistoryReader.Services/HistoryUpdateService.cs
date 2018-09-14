@@ -70,7 +70,7 @@ namespace Lykke.Service.BlockchainHistoryReader.Services
 
                 if (historySource != null)
                 {
-                    var transactions = await GetTransactionsAsync(task, historySource.LatestHash);
+                    var transactions = await GetTransactionsAsync(historySource, task);
 
                     if (transactions.Any())
                     {
@@ -93,11 +93,12 @@ namespace Lykke.Service.BlockchainHistoryReader.Services
                             );
                         }
 
-                        var latestHash = transactions.Last().Hash;
+                        historySource.OnHistoryUpdated
+                        (
+                            transactions.Select(x => x.Hash).Last()
+                        );
                         
-                        historySource.OnHistoryUpdated(transactions.Last().Hash);
-                        
-                        _log.Debug($"History source [{historySource.GetIdForLog()}] latest hash updated [{latestHash}].");
+                        _log.Debug($"History source [{historySource.GetIdForLog()}] latest hash updated [{historySource.LatestHash}].");
                     }
                     else
                     {
@@ -160,38 +161,19 @@ namespace Lykke.Service.BlockchainHistoryReader.Services
         }
         
         private async Task<HistoricalTransaction[]> GetTransactionsAsync(
-            HistoryUpdateTask task,
-            string afterHash)
+            HistorySource historySource,
+            HistoryUpdateTask task)
         {
-            var transactions = new List<HistoricalTransaction>();
-            
-            while (true)
-            {
-                var transactionsSubRange = (await _blockchainApiProxy
-                    .GetHistoryOfIncomingTransactionsAsync
-                        (
-                            blockchainType: task.BlockchainType,
-                            address: task.Address,
-                            afterHash: afterHash,
-                            take: 100
-                        ))
-                    .Where(x => x.Hash != afterHash)
-                    .ToList();
-                
-                transactions.AddRange(transactionsSubRange);
+            var transactions = await _blockchainApiProxy.GetHistoryOfIncomingTransactionsAsync
+            (
+                blockchainType: task.BlockchainType,
+                address: task.Address,
+                afterHash: historySource.LatestHash,
+                take: 500
+            );
 
-                if (!transactionsSubRange.Any())
-                {
-                    break;
-                }
-                else
-                {
-                    afterHash = transactionsSubRange.Last().Hash;
-                }
-            }
-            
-            
             return transactions
+                .Where(x => x.Hash != historySource.LatestHash)
                 .ToArray();
         }
     }
