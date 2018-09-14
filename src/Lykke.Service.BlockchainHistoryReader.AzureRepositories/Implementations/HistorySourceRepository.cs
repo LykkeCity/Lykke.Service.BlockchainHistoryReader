@@ -61,6 +61,39 @@ namespace Lykke.Service.BlockchainHistoryReader.AzureRepositories.Implementation
             );
         }
 
+        public async Task<(IEnumerable<HistorySource> HistorySources, string ContinuationToken)> GetAsync(
+            DateTime historyUpdatedOnLimit,
+            DateTime historyUpdateScheduledOnLimit,
+            string continuationToken)
+        {
+            var query = new TableQuery<HistorySourceEntity>()
+                .Where
+                (
+                    TableQuery.GenerateFilterConditionForDate
+                    (
+                        nameof(HistorySourceEntity.HistoryUpdatedOn),
+                        QueryComparisons.LessThanOrEqual,
+                        historyUpdatedOnLimit
+                    )
+                );
+            
+            IEnumerable<HistorySourceEntity> entities;
+
+            (entities, continuationToken) = await _historySources.GetDataWithContinuationTokenAsync
+            (
+                query,
+                500,
+                continuationToken
+            );
+
+            var historySources = entities.Where(x => x.HistoryUpdateScheduledOn <= historyUpdateScheduledOnLimit ||
+                                                     x.HistoryUpdateScheduledOn <= x.HistoryUpdatedOn)
+                                         .Select(RestoreHistorySourceFromEntity);
+
+
+            return (historySources, continuationToken);
+        }
+
         public async Task<HistorySource[]> GetAsync(
             DateTime historyUpdatedOnLimit,
             DateTime historyUpdateScheduledOnLimit)

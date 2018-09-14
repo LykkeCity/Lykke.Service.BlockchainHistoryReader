@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Lykke.Service.BlockchainHistoryReader.Core.Domain;
 
@@ -10,9 +11,10 @@ namespace Lykke.Service.BlockchainHistoryReader.AzureRepositories
             string address,
             string blockchainType);
 
-        Task<HistorySource[]> GetAsync(
+        Task<(IEnumerable<HistorySource> HistorySources, string ContinuationToken)> GetAsync(
             DateTime historyUpdatedOnLimit,
-            DateTime historyUpdateScheduledOnLimit);
+            DateTime historyUpdateScheduledOnLimit,
+            string continuationToken);
         
         Task<HistorySource> GetOrCreateAsync(
             string address,
