@@ -6,7 +6,7 @@ namespace Lykke.Service.BlockchainHistoryReader.Services.Tools
     {
         public static string GetIdForLog(this HistoryUpdateTask task)
         {
-            return $"{nameof(HistoryUpdateTask.BlockchainType)}: {task.BlockchainType}" +
+            return $"{nameof(HistoryUpdateTask.BlockchainType)}: {task.BlockchainType}, " +
                    $"{nameof(HistoryUpdateTask.Address)}: {task.Address}";
         }
     }

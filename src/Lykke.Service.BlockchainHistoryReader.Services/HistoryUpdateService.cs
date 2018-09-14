@@ -48,6 +48,8 @@ namespace Lykke.Service.BlockchainHistoryReader.Services
             try
             {
                 await _historyUpdateTaskRepository.CompleteAsync(task);
+                
+                _log.Debug($"History update task [{task.GetIdForLog()}] marked as completed.");
             }
             catch (Exception e)
             {
@@ -91,11 +93,17 @@ namespace Lykke.Service.BlockchainHistoryReader.Services
                             );
                         }
 
+                        var latestHash = transactions.Last().Hash;
+                        
                         historySource.OnHistoryUpdated(transactions.Last().Hash);
+                        
+                        _log.Debug($"History source [{historySource.GetIdForLog()}] latest hash updated [{latestHash}].");
                     }
                     else
                     {
                         historySource.OnHistoryUpdated();
+                        
+                        _log.Debug($"History source [{historySource.GetIdForLog()}] latest hash didn't change.");
                     }
                         
                         
@@ -116,17 +124,24 @@ namespace Lykke.Service.BlockchainHistoryReader.Services
             string blockchainType,
             string address)
         {
-            var historySource = await _historySourceRepository.TryGetAsync
-            (
-                address: address,
-                blockchainType: blockchainType
-            );
-
-            if (historySource != null)
+            try
             {
-                historySource.ResetLatestHash();
+                var historySource = await _historySourceRepository.TryGetAsync
+                (
+                    address: address,
+                    blockchainType: blockchainType
+                );
 
-                await _historySourceRepository.UpdateAsync(historySource);
+                if (historySource != null)
+                {
+                    historySource.ResetLatestHash();
+
+                    await _historySourceRepository.UpdateAsync(historySource);
+                }
+            }
+            catch (Exception e)
+            {
+                _log.Error(e, $"Failed to reset latest hash ");
             }
         }
 

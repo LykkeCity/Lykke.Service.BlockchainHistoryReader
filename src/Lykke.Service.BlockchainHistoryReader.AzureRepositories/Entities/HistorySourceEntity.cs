@@ -10,6 +10,7 @@ namespace Lykke.Service.BlockchainHistoryReader.AzureRepositories.Entities
     {
         private DateTime _historyUpdatedOn;
         private DateTime _historyUpdateScheduledOn;
+        private string _latestHash;
         
         
         public string Address { get; set; }
@@ -45,7 +46,20 @@ namespace Lykke.Service.BlockchainHistoryReader.AzureRepositories.Entities
                 }
             }
         }
-        
-        public string LatestHash { get; set; }
+
+        public string LatestHash
+        {
+            get 
+                => _latestHash;
+            set
+            {
+                if (_latestHash != value)
+                {
+                    _latestHash = value;
+                    
+                    MarkValueTypePropertyAsDirty(nameof(LatestHash));
+                }
+            }
+        }
     }
 }
