@@ -37,6 +37,7 @@ namespace Lykke.Service.BlockchainHistoryReader.Services
             Settings settings)
         {
             _chaosKitty = chaosKitty;
+            _enabledBlockchainTypes = new HashSet<string>();
             _enabledBlockchainTypesManager = settings.EnabledBlockchainTypesManager;
             _historySourceLockRepository = historySourceLockRepository;
             _historySourceRepository = historySourceRepository;
