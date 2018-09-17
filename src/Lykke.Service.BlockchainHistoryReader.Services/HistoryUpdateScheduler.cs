@@ -67,7 +67,7 @@ namespace Lykke.Service.BlockchainHistoryReader.Services
             }
             catch (Exception e)
             {
-                _log.Error(e, "Failed to schedule history updates.");
+                _log.Warning("Failed to schedule history updates.", e);
             }
             finally
             {
