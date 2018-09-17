@@ -43,11 +43,6 @@ namespace Lykke.Service.BlockchainHistoryReader.Modules
                 .AutoActivate();
             
             builder
-                .Register(context => new FixedAutofacDependencyResolver(context))
-                .As<IDependencyResolver>()
-                .SingleInstance();
-
-            builder
                 .RegisterType<WalletOperationsProjection>()
                 .AsSelf()
                 .SingleInstance();
