@@ -25,7 +25,8 @@ namespace Lykke.Service.BlockchainHistoryReader.Workflow
             return _historySourceService.AddHistorySourceIfNotExistsAsync
             (
                 blockchainType: evt.BlockchainType,
-                address: evt.Address
+                address: evt.Address,
+                clientId: evt.ClientId
             );
         }
 

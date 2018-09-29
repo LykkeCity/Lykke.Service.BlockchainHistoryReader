@@ -27,14 +27,16 @@ namespace Lykke.Service.BlockchainHistoryReader.Services
         
         public async Task AddHistorySourceIfNotExistsAsync(
             string blockchainType,
-            string address)
+            string address,
+            Guid clientId)
         {
             try
             {
                 await _historySourceRepository.GetOrCreateAsync
                 (
                     address: address,
-                    blockchainType: blockchainType
+                    blockchainType: blockchainType,
+                    clientId: clientId
                 );
                 
                 _log.Debug($"History source [{GetHistorySourceIdForLog(blockchainType, address)}] has been added.");

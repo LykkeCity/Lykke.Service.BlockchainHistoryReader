@@ -18,7 +18,8 @@ namespace Lykke.Service.BlockchainHistoryReader.AzureRepositories
         
         Task<HistorySource> GetOrCreateAsync(
             string address,
-            string blockchainType);
+            string blockchainType,
+            Guid clientId);
         
         Task UpdateAsync(
             HistorySource historySource);

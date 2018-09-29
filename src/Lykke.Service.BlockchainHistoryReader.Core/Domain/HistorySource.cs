@@ -6,10 +6,12 @@ namespace Lykke.Service.BlockchainHistoryReader.Core.Domain
     {
         private HistorySource(
             string address,
-            string blockchainType)
+            string blockchainType,
+            Guid clientId)
         {
             Address = address;
             BlockchainType = blockchainType;
+            ClientId = clientId;
             HistoryUpdatedOn = DateTime.UnixEpoch;
             HistoryUpdateScheduledOn = DateTime.UnixEpoch;
         }
@@ -17,23 +19,26 @@ namespace Lykke.Service.BlockchainHistoryReader.Core.Domain
 
         public static HistorySource Create(
             string address,
-            string blockchainType)
+            string blockchainType,
+            Guid clientId)
         {
             return new HistorySource
             (
                 address,
-                blockchainType
+                blockchainType,
+                clientId
             );
         }
 
         public static HistorySource Restore(
             string address,
             string blockchainType,
+            Guid clientId,
             DateTime historyUpdatedOn,
             DateTime historyUpdateScheduledOn,
             string latestHash)
         {
-            return new HistorySource(address, blockchainType)
+            return new HistorySource(address, blockchainType, clientId)
             {
                 HistoryUpdatedOn = historyUpdatedOn,
                 HistoryUpdateScheduledOn = historyUpdateScheduledOn,
@@ -45,6 +50,8 @@ namespace Lykke.Service.BlockchainHistoryReader.Core.Domain
         public string Address { get; }
         
         public string BlockchainType { get; }
+        
+        public Guid ClientId { get; set; }
         
         public DateTime HistoryUpdatedOn { get; private set; }
         

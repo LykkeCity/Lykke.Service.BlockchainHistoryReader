@@ -17,6 +17,8 @@ namespace Lykke.Service.BlockchainHistoryReader.AzureRepositories.Entities
         
         public string BlockchainType { get; set; }
 
+        public Guid ClientId { get; set; }
+        
         public DateTime HistoryUpdatedOn
         {
             get 

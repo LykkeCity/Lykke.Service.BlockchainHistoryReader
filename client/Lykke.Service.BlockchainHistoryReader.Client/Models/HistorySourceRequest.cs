@@ -1,3 +1,4 @@
+using System;
 using JetBrains.Annotations;
 
 namespace Lykke.Service.BlockchainHistoryReader.Client.Models
@@ -17,5 +18,10 @@ namespace Lykke.Service.BlockchainHistoryReader.Client.Models
         ///    Blockchain type.
         /// </summary>
         public string BlockchainType { get; set; }
+        
+        /// <summary>
+        ///    Client id.
+        /// </summary>
+        public Guid ClientId { get; set; }
     }
 }
