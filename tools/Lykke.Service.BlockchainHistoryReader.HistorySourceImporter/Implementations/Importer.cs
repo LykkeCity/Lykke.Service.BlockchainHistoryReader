@@ -105,7 +105,8 @@ namespace Lykke.Service.BlockchainHistoryReader.HistorySourceImporter.Implementa
                     await client.Api.AddHistorySourceAsync(new HistorySourceRequest
                     {
                         Address = wallet.Address,
-                        BlockchainType = wallet.IntegrationLayerId
+                        BlockchainType = wallet.IntegrationLayerId,
+                        ClientId = wallet.ClientId
                     });
                 }
                 catch (Exception e)

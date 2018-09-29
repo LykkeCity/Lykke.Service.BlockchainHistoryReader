@@ -54,5 +54,11 @@ namespace Lykke.Service.BlockchainHistoryReader.Contract.Events
         /// </summary>
         [ProtoMember(8)]
         public TransactionType? TransactionType { get; set; }
+        
+        /// <summary>
+        ///    Client Id.
+        /// </summary>
+        [ProtoMember(9)]
+        public Guid ClientId { get; set; }
     }
 }

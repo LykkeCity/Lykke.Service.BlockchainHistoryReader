@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 
 namespace Lykke.Service.BlockchainHistoryReader.Core.Services
@@ -6,7 +7,8 @@ namespace Lykke.Service.BlockchainHistoryReader.Core.Services
     {
         Task AddHistorySourceIfNotExistsAsync(
             string blockchainType,
-            string address);
+            string address,
+            Guid clientId);
 
         Task DeleteHistorySourceIfExistsAsync(
             string blockchainType,

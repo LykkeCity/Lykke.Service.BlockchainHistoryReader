@@ -142,7 +142,8 @@ namespace Lykke.Service.BlockchainHistoryReader.AzureRepositories.Implementation
 
         public async Task<HistorySource> GetOrCreateAsync(
             string address,
-            string blockchainType)
+            string blockchainType,
+            Guid clientId)
         {
             var entity = await _historySources.GetOrInsertAsync
             (
@@ -153,7 +154,8 @@ namespace Lykke.Service.BlockchainHistoryReader.AzureRepositories.Implementation
                     var historySource = HistorySource.Create
                     (
                         address: address,
-                        blockchainType: blockchainType
+                        blockchainType: blockchainType,
+                        clientId: clientId
                     );
 
                     return ConvertHistorySourceToEntity(historySource);
@@ -197,6 +199,7 @@ namespace Lykke.Service.BlockchainHistoryReader.AzureRepositories.Implementation
                 (
                     address: entity.Address,
                     blockchainType: entity.BlockchainType,
+                    clientId: entity.ClientId,
                     historyUpdatedOn: entity.HistoryUpdatedOn,
                     historyUpdateScheduledOn: entity.HistoryUpdateScheduledOn,
                     latestHash: entity.LatestHash
@@ -243,6 +246,7 @@ namespace Lykke.Service.BlockchainHistoryReader.AzureRepositories.Implementation
             (
                 address: entity.Address,
                 blockchainType: entity.BlockchainType,
+                clientId: entity.ClientId,
                 historyUpdatedOn: entity.HistoryUpdatedOn,
                 historyUpdateScheduledOn: entity.HistoryUpdateScheduledOn,
                 latestHash: entity.LatestHash

@@ -1,3 +1,4 @@
+using System;
 using Lykke.AzureStorage.Tables;
 
 namespace Lykke.Service.BlockchainHistoryReader.HistorySourceImporter.Implementations
@@ -7,5 +8,7 @@ namespace Lykke.Service.BlockchainHistoryReader.HistorySourceImporter.Implementa
         public string Address { get; set; }
 
         public string IntegrationLayerId { get; set; }
+        
+        public Guid ClientId { get; set; }
     }
 }

@@ -83,6 +83,7 @@ namespace Lykke.Service.BlockchainHistoryReader.Services
                                     Amount = transaction.Amount,
                                     AssetId = transaction.AssetId,
                                     BlockchainType = task.BlockchainType,
+                                    ClientId = historySource.ClientId,
                                     FromAddress = transaction.FromAddress,
                                     Hash = transaction.Hash,
                                     Timestamp = transaction.Timestamp,

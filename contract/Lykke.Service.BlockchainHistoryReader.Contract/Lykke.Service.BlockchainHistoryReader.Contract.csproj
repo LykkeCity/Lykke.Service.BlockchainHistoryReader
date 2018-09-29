@@ -6,7 +6,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Lykke.Service.BlockchainApi.Contract" Version="13.2.0" />
+      <PackageReference Include="Lykke.Service.BlockchainApi.Contract" Version="13.2.1" />
       <PackageReference Include="protobuf-net" Version="2.4.0" />
     </ItemGroup>
 

@@ -26,7 +26,8 @@ namespace Lykke.Service.BlockchainHistoryReader.Controllers
             await _historySourceService.AddHistorySourceIfNotExistsAsync
             (
                 blockchainType: request.BlockchainType,
-                address: request.Address
+                address: request.Address,
+                clientId: request.ClientId
             );
             
             return Ok();
