@@ -20,6 +20,17 @@ namespace Lykke.Service.BlockchainHistoryReader.Workflow
 
         [UsedImplicitly]
         public Task Handle(
+            WalletArchivedEvent evt)
+        {
+            return _historySourceService.DeleteHistorySourceIfExistsAsync
+            (
+                blockchainType: evt.BlockchainType,
+                address: evt.Address
+            );
+        }
+        
+        [UsedImplicitly]
+        public Task Handle(
             WalletCreatedEvent evt)
         {
             return _historySourceService.AddHistorySourceIfNotExistsAsync
