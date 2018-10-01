@@ -230,6 +230,7 @@ namespace Lykke.Service.BlockchainHistoryReader.AzureRepositories.Implementation
             {
                 Address = historySource.Address,
                 BlockchainType = historySource.BlockchainType,
+                ClientId = historySource.ClientId,
                 HistoryUpdatedOn = historySource.HistoryUpdatedOn,
                 HistoryUpdateScheduledOn = historySource.HistoryUpdateScheduledOn,
                 LatestHash = historySource.LatestHash,
