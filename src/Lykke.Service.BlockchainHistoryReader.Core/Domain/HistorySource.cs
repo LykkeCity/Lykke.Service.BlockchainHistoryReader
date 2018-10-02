@@ -51,7 +51,7 @@ namespace Lykke.Service.BlockchainHistoryReader.Core.Domain
         
         public string BlockchainType { get; }
         
-        public Guid ClientId { get; set; }
+        public Guid ClientId { get; }
         
         public DateTime HistoryUpdatedOn { get; private set; }
         
@@ -80,7 +80,9 @@ namespace Lykke.Service.BlockchainHistoryReader.Core.Domain
 
         public void ResetLatestHash()
         {
-            LatestHash = null;
+            HistoryUpdatedOn = DateTime.UnixEpoch;
+            HistoryUpdateScheduledOn = DateTime.UnixEpoch;
+            LatestHash = string.Empty;
         }
     }
 }

@@ -110,8 +110,9 @@ namespace Lykke.Service.BlockchainHistoryReader.Modules
                         typeof(TransactionCompletedEvent))
                     .With(
                         BoundedContext.EventsRoute)
-                
+                    
                     .ListeningEvents(
+                        typeof(WalletArchivedEvent),
                         typeof(WalletCreatedEvent),
                         typeof(WalletDeletedEvent))
                     .From(
@@ -121,6 +122,8 @@ namespace Lykke.Service.BlockchainHistoryReader.Modules
                     .WithProjection(
                         typeof(WalletOperationsProjection),
                         BlockchainWalletsBoundedContext.Name)
+                
+                    .ProcessingOptions("self").MultiThreaded(8).QueueCapacity(1024)
             };
             
             // Cqrs Engine
