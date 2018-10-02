@@ -10,4 +10,7 @@
     <PackageReference Include="MSTest.TestAdapter" Version="1.3.2" />
     <PackageReference Include="MSTest.TestFramework" Version="1.3.2" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\contract\Lykke.Service.BlockchainHistoryReader.Contract\Lykke.Service.BlockchainHistoryReader.Contract.csproj" />
+  </ItemGroup>
 </Project>
