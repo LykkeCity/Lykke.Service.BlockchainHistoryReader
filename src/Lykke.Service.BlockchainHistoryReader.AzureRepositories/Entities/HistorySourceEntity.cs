@@ -8,6 +8,7 @@ namespace Lykke.Service.BlockchainHistoryReader.AzureRepositories.Entities
     [ValueTypeMergingStrategy(ValueTypeMergingStrategy.UpdateIfDirty)]
     public class HistorySourceEntity : AzureTableEntity
     {
+        private Guid _clientId;
         private DateTime _historyUpdatedOn;
         private DateTime _historyUpdateScheduledOn;
         private string _latestHash;
@@ -17,7 +18,20 @@ namespace Lykke.Service.BlockchainHistoryReader.AzureRepositories.Entities
         
         public string BlockchainType { get; set; }
 
-        public Guid ClientId { get; set; }
+        public Guid ClientId
+        {
+            get 
+                => _clientId;
+            set
+            {
+                if (_clientId != value)
+                {
+                    _clientId = value;
+                    
+                    MarkValueTypePropertyAsDirty(nameof(ClientId));
+                }
+            }
+        }
         
         public DateTime HistoryUpdatedOn
         {
