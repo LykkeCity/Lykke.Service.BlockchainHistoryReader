@@ -1,5 +1,7 @@
 using System;
 using System.Threading.Tasks;
+using AzureStorage;
+using AzureStorage.Blob;
 using Common.Log;
 using JetBrains.Annotations;
 using Lykke.Common.Log;
@@ -14,26 +16,22 @@ namespace Lykke.Service.BlockchainHistoryReader.AzureRepositories.Implementation
     [UsedImplicitly]
     public class HistorySourceLockRepository : RepositoryBase, IHistorySourceLockRepository
     {
-        private static readonly TimeSpan LockDuration = TimeSpan.FromSeconds(60); 
-        
-        private readonly CloudBlobContainer _container;
+        private static readonly TimeSpan LockDuration = TimeSpan.FromSeconds(60);
+
+        private readonly IBlobStorage _blobStorage;
+        private readonly string _container;
         private readonly ILog _log;
         private readonly string _key;
 
 
-        private CloudBlockBlob _lockBlob;
-
-
         private HistorySourceLockRepository(
-            ILogFactory logFactory,
-            string connectionString,
+            IBlobStorage blobStorage,
             string container,
+            ILogFactory logFactory,
             string key)
         {
-            var storageAccount = CloudStorageAccount.Parse(connectionString);
-            var blobClient = storageAccount.CreateCloudBlobClient();
-            
-            _container = blobClient.GetContainerReference(container);
+            _blobStorage = blobStorage;
+            _container = container;
             _log = logFactory.CreateLog(this);
             _key = key;
         }
@@ -43,45 +41,36 @@ namespace Lykke.Service.BlockchainHistoryReader.AzureRepositories.Implementation
             IReloadingManager<string> connectionString,
             ILogFactory logFactory)
         {
-            return new HistorySourceLockReloadingDecorator
+            return new HistorySourceLockRepository
             (
-                async reloadSettings =>
-                {
-                    var lockRepository = new HistorySourceLockRepository
-                    (
-                        logFactory: logFactory,
-                        connectionString: reloadSettings ? await connectionString.Reload() : connectionString.CurrentValue,
-                        container: "transaction-history-sources",
-                        key: ".lock"
-                    );
-
-                    await lockRepository.InitializeAsync();
-
-                    return lockRepository;
-                });
-        }
-        
-        private async Task InitializeAsync()
-        {
-            await _container.CreateIfNotExistsAsync();
-
-            _lockBlob = _container.GetBlockBlobReference(_key);
-
-            if (!await _lockBlob.ExistsAsync())
-            {
-                await _lockBlob.UploadTextAsync(string.Empty);
-            }
+                blobStorage: AzureBlobStorage.Create(connectionString),
+                container: "transaction-history-sources",
+                logFactory: logFactory,
+                key: ".lock"
+            );
         }
         
         public async Task<IHistorySourceLockToken> TryLockAsync()
         {
             try
             {
-                var leaseId = await _lockBlob.AcquireLeaseAsync(LockDuration);
+                var leaseId = await _blobStorage.AcquireLeaseAsync
+                (
+                    container: _container, 
+                    key: _key,
+                    leaseTime: LockDuration
+                );
 
                 _log.Debug("History sources have been locked.");
                 
-                return new LockToken(_lockBlob, _log, leaseId);
+                return new LockToken
+                (
+                    blobStorage: _blobStorage,
+                    container: _container,
+                    key: _key,
+                    leaseId: leaseId,
+                    log: _log
+                );
             }
             catch (StorageException e) when (e.RequestInformation.HttpStatusCode == StatusCodes.Status409Conflict)
             {
@@ -91,21 +80,27 @@ namespace Lykke.Service.BlockchainHistoryReader.AzureRepositories.Implementation
         
         private class LockToken : IHistorySourceLockToken
         {
+            private readonly IBlobStorage _blobStorage;
+            private readonly string _container;
+            private readonly string _key;
             private readonly string _leaseId;
             private readonly ILog _log;
-            private readonly CloudBlockBlob _lockBlob;
 
             private DateTime _renewAfter;
 
             
             public LockToken(
-                CloudBlockBlob lockBlob,
-                ILog log,
-                string leaseId)
+                IBlobStorage blobStorage,
+                string container,
+                string key,
+                string leaseId,
+                ILog log)
             {
+                _blobStorage = blobStorage;
+                _container = container;
+                _key = key;
                 _leaseId = leaseId;
                 _log = log;
-                _lockBlob = lockBlob;
                 
                 UpdateRenewAfter();
             }
@@ -115,10 +110,12 @@ namespace Lykke.Service.BlockchainHistoryReader.AzureRepositories.Implementation
             {
                 try
                 {
-                    await  _lockBlob.ReleaseLeaseAsync(new AccessCondition
-                    {
-                        LeaseId = _leaseId
-                    });
+                    await  _blobStorage.ReleaseLeaseAsync
+                    (
+                        container: _container,
+                        key: _key, 
+                        leaseId: _leaseId
+                    );
                     
                     _log.Debug("History sources lock has been released.");
                 }
@@ -134,10 +131,12 @@ namespace Lykke.Service.BlockchainHistoryReader.AzureRepositories.Implementation
                 {
                     if (DateTime.UtcNow > _renewAfter)
                     {
-                        await _lockBlob.RenewLeaseAsync(new AccessCondition
-                        {
-                            LeaseId = _leaseId
-                        });
+                        await _blobStorage.RenewLeaseAsync
+                        (
+                            container: _container,
+                            key: _key,
+                            leaseId: _leaseId
+                        );
                     
                         UpdateRenewAfter();
                         
