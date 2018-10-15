@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Common.Log;
 using JetBrains.Annotations;
+using Lykke.AzureStorage;
 using Lykke.Common.Log;
 using Lykke.Cqrs;
 using Lykke.Service.BlockchainApi.Client.Models;
@@ -98,21 +99,27 @@ namespace Lykke.Service.BlockchainHistoryReader.Services
                         (
                             transactions.Select(x => x.Hash).Last()
                         );
-                        
+
                         _log.Debug($"History source [{historySource.GetIdForLog()}] latest hash updated [{historySource.LatestHash}].");
                     }
                     else
                     {
                         historySource.OnHistoryUpdated();
-                        
+
                         _log.Debug($"History source [{historySource.GetIdForLog()}] latest hash didn't change.");
                     }
-                        
-                        
+
+
                     await _historySourceRepository.UpdateAsync(historySource);
                 }
-                
+
                 return true;
+            }
+            catch (OptimisticConcurrencyException e)
+            {
+                _log.Warning("Failed to update history source state. No action required.", e);
+
+                return false;
             }
             catch (Exception e)
             {
