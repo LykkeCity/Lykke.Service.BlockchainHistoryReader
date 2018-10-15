@@ -60,11 +60,9 @@ namespace Lykke.Service.BlockchainHistoryReader.QueueConsumers
             }
         }
         
-        private async Task<(bool, HistoryUpdateTask)> TryGetNextTaskAsync()
+        private async Task<HistoryUpdateTask> TryGetNextTaskAsync()
         {
-            var task = await _historyUpdateService.TryGetNextHistoryUpdateTaskAsync();
-
-            return (task != null, task);
+            return await _historyUpdateService.TryGetNextHistoryUpdateTaskAsync();
         }
 
         private async Task ProcessTaskAsync(
@@ -102,9 +100,9 @@ namespace Lykke.Service.BlockchainHistoryReader.QueueConsumers
                 {
                     scheduledTasks.RemoveAll(x => x.IsCompleted);
 
-                    var (nextTaskRetrieved, nextTask) = await TryGetNextTaskAsync();
+                    var nextTask = await TryGetNextTaskAsync();
 
-                    if (nextTaskRetrieved)
+                    if (nextTask != null)
                     {
                         scheduledTasks.Add
                         (
@@ -113,9 +111,9 @@ namespace Lykke.Service.BlockchainHistoryReader.QueueConsumers
                     }
                     else
                     {
-                        await Task.Delay(_emptyQueueCheckInterval, cancellationToken);
-                        
                         _throttler.Release();
+                        
+                        await Task.Delay(_emptyQueueCheckInterval, cancellationToken);
                     }
                 }
                 else
