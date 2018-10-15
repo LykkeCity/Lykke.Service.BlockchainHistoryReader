@@ -179,7 +179,7 @@ namespace Lykke.Service.BlockchainHistoryReader.Services
             );
 
             return transactions
-                .Where(x => x.Hash != historySource.LatestHash)
+                .SkipWhile(x => x.Hash == historySource.LatestHash)
                 .ToArray();
         }
     }
