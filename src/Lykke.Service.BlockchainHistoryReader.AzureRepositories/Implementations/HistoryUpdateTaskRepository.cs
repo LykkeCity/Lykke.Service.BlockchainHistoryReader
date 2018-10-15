@@ -13,7 +13,7 @@ using ProtoBuf;
 namespace Lykke.Service.BlockchainHistoryReader.AzureRepositories.Implementations
 {
     [UsedImplicitly]
-    public class HistoryUpdateTaskRepository : RepositoryBase, IHistoryUpdateTaskRepository
+    public class HistoryUpdateTaskRepository : IHistoryUpdateTaskRepository
     {
         private readonly IQueueExt _queue;
         

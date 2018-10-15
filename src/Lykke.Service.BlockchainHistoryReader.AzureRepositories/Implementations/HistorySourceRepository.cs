@@ -17,7 +17,7 @@ using Microsoft.WindowsAzure.Storage.Table;
 namespace Lykke.Service.BlockchainHistoryReader.AzureRepositories.Implementations
 {
     [UsedImplicitly]
-    public class HistorySourceRepository : RepositoryBase, IHistorySourceRepository
+    public class HistorySourceRepository : IHistorySourceRepository
     {
         
         // ReSharper disable once NotAccessedField.Local : Reserved for future use
