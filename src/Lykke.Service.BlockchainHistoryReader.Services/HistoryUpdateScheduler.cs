@@ -65,10 +65,6 @@ namespace Lykke.Service.BlockchainHistoryReader.Services
                     await ScheduleUpdatesAsync(historySources, @lock);
                 }
             }
-            catch (Exception e)
-            {
-                _log.Warning("Failed to schedule history updates.", e);
-            }
             finally
             {
                 if (@lock != null)
