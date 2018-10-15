@@ -17,27 +17,22 @@ using Microsoft.WindowsAzure.Storage.Table;
 namespace Lykke.Service.BlockchainHistoryReader.AzureRepositories.Implementations
 {
     [UsedImplicitly]
-    public class HistorySourceRepository : RepositoryBase, IHistorySourceRepository
+    public class HistorySourceRepository : IHistorySourceRepository
     {
         
-        // ReSharper disable once NotAccessedField.Local : Reserved for future use
-        private readonly IChaosKitty _chaosKitty;
         private readonly INoSQLTableStorage<HistorySourceEntity> _historySources;
 
         
         private HistorySourceRepository(
-            IChaosKitty chaosKitty,
             INoSQLTableStorage<HistorySourceEntity> historySources)
         {
-            _chaosKitty = chaosKitty;
             _historySources = historySources;
         }
 
 
         public static IHistorySourceRepository Create(
             IReloadingManager<string> connectionString,
-            ILogFactory logFactory,
-            IChaosKitty chaosKitty)
+            ILogFactory logFactory)
         {
             var historySources = AzureTableStorage<HistorySourceEntity>.Create
             (
@@ -46,7 +41,7 @@ namespace Lykke.Service.BlockchainHistoryReader.AzureRepositories.Implementation
                 logFactory
             );
             
-            return new HistorySourceRepository(chaosKitty, historySources);
+            return new HistorySourceRepository(historySources);
         }
 
         
@@ -56,7 +51,7 @@ namespace Lykke.Service.BlockchainHistoryReader.AzureRepositories.Implementation
         {
             return _historySources.DeleteIfExistAsync
             (
-                partitionKey: GetPartitionKey(blockchainType),
+                partitionKey: GetPartitionKey(blockchainType, address),
                 rowKey: GetRowKey(address)
             );
         }
@@ -93,53 +88,7 @@ namespace Lykke.Service.BlockchainHistoryReader.AzureRepositories.Implementation
 
             return (historySources, continuationToken);
         }
-
-        public async Task<HistorySource[]> GetAsync(
-            DateTime historyUpdatedOnLimit,
-            DateTime historyUpdateScheduledOnLimit)
-        {
-            string continuationToken = null;
-            var entities = new List<HistorySourceEntity>();
-
-            var query = new TableQuery<HistorySourceEntity>()
-                .Where
-                (
-                    TableQuery.GenerateFilterConditionForDate
-                    (
-                        nameof(HistorySourceEntity.HistoryUpdatedOn),
-                        QueryComparisons.LessThanOrEqual,
-                        historyUpdatedOnLimit
-                    )
-                );
-            
-            do
-            {
-                IEnumerable<HistorySourceEntity> entitiesBatch;
-
-                (entitiesBatch, continuationToken) = await _historySources.GetDataWithContinuationTokenAsync
-                (
-                    query,
-                    500,
-                    continuationToken
-                );
-                
-                entities.AddRange
-                (
-                    entitiesBatch
-                        .Where(x => x.HistoryUpdateScheduledOn <= historyUpdateScheduledOnLimit ||
-                                    x.HistoryUpdateScheduledOn <= x.HistoryUpdatedOn)
-                );
-                
-                _chaosKitty.Meow($"{nameof(HistorySourceRepository)}-{nameof(GetAsync)}");
-
-            } while (continuationToken != null);
-
-
-            return entities
-                .Select(RestoreHistorySourceFromEntity)
-                .ToArray();
-        }
-
+        
         public async Task<HistorySource> GetOrCreateAsync(
             string address,
             string blockchainType,
@@ -147,7 +96,7 @@ namespace Lykke.Service.BlockchainHistoryReader.AzureRepositories.Implementation
         {
             var entity = await _historySources.GetOrInsertAsync
             (
-                partitionKey: GetPartitionKey(blockchainType),
+                partitionKey: GetPartitionKey(blockchainType, address),
                 rowKey: GetRowKey(address),
                 createNew: () =>
                 {
@@ -165,22 +114,12 @@ namespace Lykke.Service.BlockchainHistoryReader.AzureRepositories.Implementation
             return RestoreHistorySourceFromEntity(entity);
         }
 
-        public Task UpdateAsync(
+        public async Task UpdateAsync(
             HistorySource historySource)
         {
-            return _historySources.MergeAsync
-            (
-                partitionKey: GetPartitionKey(historySource.BlockchainType),
-                rowKey: GetRowKey(historySource.Address),
-                mergeAction: (entity) =>
-                {
-                    entity.HistoryUpdatedOn = historySource.HistoryUpdatedOn;
-                    entity.HistoryUpdateScheduledOn = historySource.HistoryUpdateScheduledOn;
-                    entity.LatestHash = historySource.LatestHash;
+            var entity = ConvertHistorySourceToEntity(historySource);
 
-                    return entity;
-                }
-            );
+            await _historySources.ReplaceAsync(entity);
         }
 
         public async Task<HistorySource> TryGetAsync(
@@ -189,7 +128,7 @@ namespace Lykke.Service.BlockchainHistoryReader.AzureRepositories.Implementation
         {
             var entity = await _historySources.GetDataAsync
             (
-                partition: GetPartitionKey(blockchainType),
+                partition: GetPartitionKey(blockchainType, address),
                 row: GetRowKey(address)
             );
 
@@ -200,6 +139,7 @@ namespace Lykke.Service.BlockchainHistoryReader.AzureRepositories.Implementation
                     address: entity.Address,
                     blockchainType: entity.BlockchainType,
                     clientId: entity.ClientId,
+                    etag: entity.ETag,
                     historyUpdatedOn: entity.HistoryUpdatedOn,
                     historyUpdateScheduledOn: entity.HistoryUpdateScheduledOn,
                     latestHash: entity.LatestHash
@@ -212,9 +152,10 @@ namespace Lykke.Service.BlockchainHistoryReader.AzureRepositories.Implementation
         }
 
         private static string GetPartitionKey(
-            string blockchainType)
+            string blockchainType,
+            string address)
         {
-            return $"{blockchainType}-{blockchainType.CalculateHexHash32(3)}";
+            return $"{blockchainType}-{address.CalculateHexHash32(3)}";
         }
         
         private static string GetRowKey(
@@ -235,8 +176,9 @@ namespace Lykke.Service.BlockchainHistoryReader.AzureRepositories.Implementation
                 HistoryUpdateScheduledOn = historySource.HistoryUpdateScheduledOn,
                 LatestHash = historySource.LatestHash,
                 
-                PartitionKey = GetPartitionKey(historySource.BlockchainType),
-                RowKey = GetRowKey(historySource.Address)
+                PartitionKey = GetPartitionKey(historySource.BlockchainType, historySource.Address),
+                RowKey = GetRowKey(historySource.Address),
+                ETag = historySource.ETag
             };
         }
 
@@ -248,6 +190,7 @@ namespace Lykke.Service.BlockchainHistoryReader.AzureRepositories.Implementation
                 address: entity.Address,
                 blockchainType: entity.BlockchainType,
                 clientId: entity.ClientId,
+                etag: entity.ETag,
                 historyUpdatedOn: entity.HistoryUpdatedOn,
                 historyUpdateScheduledOn: entity.HistoryUpdateScheduledOn,
                 latestHash: entity.LatestHash

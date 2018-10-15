@@ -86,8 +86,7 @@ namespace Lykke.Service.BlockchainHistoryReader.Modules
                 .Register(x => HistorySourceRepository.Create
                 (
                     connectionString: connectionString,
-                    logFactory: x.Resolve<ILogFactory>(),
-                    chaosKitty: x.Resolve<IChaosKitty>()
+                    logFactory: x.Resolve<ILogFactory>()
                 ))
                 .As<IHistorySourceRepository>()
                 .SingleInstance();

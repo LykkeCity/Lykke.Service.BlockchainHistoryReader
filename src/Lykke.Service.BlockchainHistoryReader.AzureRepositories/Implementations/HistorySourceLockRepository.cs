@@ -14,7 +14,7 @@ using Microsoft.WindowsAzure.Storage.Blob;
 namespace Lykke.Service.BlockchainHistoryReader.AzureRepositories.Implementations
 {
     [UsedImplicitly]
-    public class HistorySourceLockRepository : RepositoryBase, IHistorySourceLockRepository
+    public class HistorySourceLockRepository : IHistorySourceLockRepository
     {
         private static readonly TimeSpan LockDuration = TimeSpan.FromSeconds(60);
 

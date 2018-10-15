@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Common;
+using Common.Log;
 using JetBrains.Annotations;
 using Lykke.Common.Log;
 using Lykke.Service.BlockchainHistoryReader.Core.Services;
@@ -13,6 +14,7 @@ namespace Lykke.Service.BlockchainHistoryReader.Timers
     public class HistoryUpdateSchedulerTimer : TimerPeriod
     {
         private readonly IHistoryUpdateScheduler _historyUpdateScheduler;
+        
         
         public HistoryUpdateSchedulerTimer(
             IHistoryUpdateScheduler historyUpdateScheduler,

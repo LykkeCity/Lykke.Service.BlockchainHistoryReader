@@ -44,6 +44,8 @@ namespace Lykke.Service.BlockchainHistoryReader.Services
             catch (Exception e)
             {
                 _log.Error(e, $"Failed to add history source [{GetHistorySourceIdForLog(blockchainType, address)}].");
+
+                throw;
             }
         }
 
@@ -64,6 +66,8 @@ namespace Lykke.Service.BlockchainHistoryReader.Services
             catch (Exception e)
             {
                 _log.Error(e, $"Failed to delete history source [{GetHistorySourceIdForLog(blockchainType, address)}].");
+
+                throw;
             }
             
             
