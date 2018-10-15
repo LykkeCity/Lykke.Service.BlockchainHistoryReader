@@ -149,6 +149,8 @@ namespace Lykke.Service.BlockchainHistoryReader.Services
                     $"Failed to reset latest hash for specified history source " +
                     $"[{nameof(HistorySource.BlockchainType)}: {blockchainType}, {nameof(HistorySource.Address)}: {address}]"
                 );
+
+                throw;
             }
         }
 
