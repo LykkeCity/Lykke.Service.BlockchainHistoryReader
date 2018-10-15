@@ -114,22 +114,12 @@ namespace Lykke.Service.BlockchainHistoryReader.AzureRepositories.Implementation
             return RestoreHistorySourceFromEntity(entity);
         }
 
-        public Task UpdateAsync(
+        public async Task UpdateAsync(
             HistorySource historySource)
         {
-            return _historySources.MergeAsync
-            (
-                partitionKey: GetPartitionKey(historySource.BlockchainType, historySource.Address),
-                rowKey: GetRowKey(historySource.Address),
-                mergeAction: (entity) =>
-                {
-                    entity.HistoryUpdatedOn = historySource.HistoryUpdatedOn;
-                    entity.HistoryUpdateScheduledOn = historySource.HistoryUpdateScheduledOn;
-                    entity.LatestHash = historySource.LatestHash;
+            var entity = ConvertHistorySourceToEntity(historySource);
 
-                    return entity;
-                }
-            );
+            await _historySources.ReplaceAsync(entity);
         }
 
         public async Task<HistorySource> TryGetAsync(
@@ -149,6 +139,7 @@ namespace Lykke.Service.BlockchainHistoryReader.AzureRepositories.Implementation
                     address: entity.Address,
                     blockchainType: entity.BlockchainType,
                     clientId: entity.ClientId,
+                    etag: entity.ETag,
                     historyUpdatedOn: entity.HistoryUpdatedOn,
                     historyUpdateScheduledOn: entity.HistoryUpdateScheduledOn,
                     latestHash: entity.LatestHash
@@ -186,7 +177,8 @@ namespace Lykke.Service.BlockchainHistoryReader.AzureRepositories.Implementation
                 LatestHash = historySource.LatestHash,
                 
                 PartitionKey = GetPartitionKey(historySource.BlockchainType, historySource.Address),
-                RowKey = GetRowKey(historySource.Address)
+                RowKey = GetRowKey(historySource.Address),
+                ETag = historySource.ETag
             };
         }
 
@@ -198,6 +190,7 @@ namespace Lykke.Service.BlockchainHistoryReader.AzureRepositories.Implementation
                 address: entity.Address,
                 blockchainType: entity.BlockchainType,
                 clientId: entity.ClientId,
+                etag: entity.ETag,
                 historyUpdatedOn: entity.HistoryUpdatedOn,
                 historyUpdateScheduledOn: entity.HistoryUpdateScheduledOn,
                 latestHash: entity.LatestHash
