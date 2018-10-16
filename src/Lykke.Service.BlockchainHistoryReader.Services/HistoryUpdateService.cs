@@ -117,7 +117,7 @@ namespace Lykke.Service.BlockchainHistoryReader.Services
             }
             catch (OptimisticConcurrencyException e)
             {
-                _log.Warning("Failed to update history source state. No action required.", e);
+                _log.Warning($"Failed to update latest hash of history source [{task.GetIdForLog()}] due to optimistic concurrency exception. No action required.");
 
                 return false;
             }

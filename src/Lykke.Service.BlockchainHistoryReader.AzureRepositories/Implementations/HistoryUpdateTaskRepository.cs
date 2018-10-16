@@ -53,12 +53,13 @@ namespace Lykke.Service.BlockchainHistoryReader.AzureRepositories.Implementation
             );
         }
 
-        public async Task EnqueueAsync(
+        public Task EnqueueAsync(
             HistoryUpdateTask task)
         {
-            await _queue.PutRawMessageAsync
+            return _queue.PutRawMessageAsync
             (
-                SerializeObject(task)
+                SerializeObject(task),
+                TimeSpan.FromSeconds(30)
             );
         }
 
