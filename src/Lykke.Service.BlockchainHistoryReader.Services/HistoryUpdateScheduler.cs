@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Common.Log;
 using JetBrains.Annotations;
+using Lykke.AzureStorage;
 using Lykke.Common.Chaos;
 using Lykke.Common.Log;
 using Lykke.Service.BlockchainHistoryReader.AzureRepositories;
@@ -149,6 +150,10 @@ namespace Lykke.Service.BlockchainHistoryReader.Services
                         historySource.OnHistoryUpdateScheduled();
 
                         await _historySourceRepository.UpdateAsync(historySource);
+                    }
+                    catch (OptimisticConcurrencyException)
+                    {
+                        _log.Warning($"Failed to mark history source [{task.GetIdForLog()}] as planned for update due to optimistic concurrency exception. No action required.");
                     }
                     catch (Exception e)
                     {
