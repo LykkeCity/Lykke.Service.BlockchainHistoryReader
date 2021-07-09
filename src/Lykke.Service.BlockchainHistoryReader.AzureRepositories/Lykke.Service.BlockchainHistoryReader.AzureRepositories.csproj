@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
+    <AssemblyName>Lykke.Service.BlockchainHistoryReader.AzureRepositories</AssemblyName>
+    <RootNamespace>Lykke.Service.BlockchainHistoryReader.AzureRepositories</RootNamespace>
+    <Version>1.0.0</Version>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Lykke.AzureStorage" Version="8.13.1" />
+    <PackageReference Include="protobuf-net" Version="2.4.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Lykke.Service.BlockchainHistoryReader.Core\Lykke.Service.BlockchainHistoryReader.Core.csproj" />
+  </ItemGroup>
+</Project>

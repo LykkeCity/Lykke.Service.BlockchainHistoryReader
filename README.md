@@ -1,2 +1,2 @@
 # Lykke.Service.BlockchainHistoryReader
-BIL History Reader
+Detects transactions history updates and generates corresponding events
